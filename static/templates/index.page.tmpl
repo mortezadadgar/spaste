@@ -1,0 +1,39 @@
+{{ block "base" .}}
+<!-- TODO:
+	- svg icons(save, sun, share) DONE
+	- hover on svg icons and input
+	- line numbers
+	- copy to clipboard
+	- test code
+	- syntax highlighting HOW?
+-->
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Simple paste</title>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link href="./static/styles/style.css" rel="stylesheet" />
+	</head>
+	<body>
+		<header class="header">
+			<div class="header__start">Simple Paste</div>
+			<div class="header__middle">
+				<input class="address-input"></input>
+				<div class="header__icons js-header__save"></div>
+			</div>
+			<div class="header__end">
+				<!-- copy to clipboard -->
+				<div class="header__icons header__share"></div>
+				<!-- change to moon on click -->
+				<div class="header__icons header__sun"></div>
+			</div>
+		</header>
+		<main class="main">
+			<textarea class="js-main__input" type="text" spellcheck="false" autofocus></textarea>
+		</main>
+		<footer></footer>
+		<script src="./static/js/script.js"></script> 
+	</body>
+</html>
+{{ end }}
