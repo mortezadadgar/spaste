@@ -24,10 +24,16 @@ import (
 	"github.com/mortezadadgar/spaste/template"
 )
 
+type templateData struct {
+	Text string // TODO: do we need a bigger type
+	Addr string
+}
+
 type server struct {
-	cfg      *config.Config
-	template *template.Template
-	snippet  *snippets.Snippet
+	cfg          *config.Config
+	template     *template.Template
+	snippet      *snippets.Snippet
+	templateData *templateData
 }
 
 func NewServer(cfg *config.Config, template *template.Template, snippet *snippets.Snippet) server {
@@ -57,12 +63,12 @@ func (s *server) logger(next http.Handler) http.Handler {
 		now := time.Now()
 
 		defer func() {
-			log.Printf("%s %s %s from %s in %dms",
+			log.Printf("[%s %s %s from %s in %dµs]",
 				r.Method,
 				r.URL.Path,
 				r.Proto,
 				r.Host,
-				time.Since(now))
+				time.Since(now).Microseconds())
 		}()
 
 		next.ServeHTTP(w, r)
@@ -92,11 +98,6 @@ func (s *server) indexHandler(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func newUserContext() *context.Context {
-	// return context.WithValue(context.Background(), )
-	return nil
-}
-
 func genRandAddr(len int64) (string, error) {
 	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	buffer := make([]byte, len)
@@ -109,12 +110,18 @@ func genRandAddr(len int64) (string, error) {
 	}
 
 	return string(buffer), nil
+	// return "hbhhdifdhg", nil // HACK
 }
 
 type envelope struct {
 	Snippet interface{} `json:"snippet"`
 }
 
+// BAD BAD BAD
+var t templateData
+
+// TODO:
+// - unlikley: check on repetitive addresses
 func (s *server) addSnippet(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -122,8 +129,7 @@ func (s *server) addSnippet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var input struct {
-		Id   int    `json:"id"`
-		Data string `json:"data"`
+		Text string `json:"text"`
 	}
 
 	err = json.Unmarshal(b, &envelope{&input})
@@ -131,22 +137,35 @@ func (s *server) addSnippet(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("data: %s\n", input.Data)
+	var output struct {
+		Addr string `json:"addr"`
+	}
 
 	// TODO: append filetype when formats when syntax highlighting in available
-	addr, err := genRandAddr(10)
+	output.Addr, err = genRandAddr(10)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	addrURL := fmt.Sprintf("%s/%s", r.Host, addr)
-
-	id, err := s.snippet.Add(input.Data, addrURL)
+	resp, err := json.Marshal(envelope{output})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("%d: %s\n", id, addrURL)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(resp)
+
+	id, err := s.snippet.Add(input.Text, output.Addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("%d: %s\n", id, output.Addr)
+
+	t = templateData{
+		Addr: output.Addr,
+		Text: input.Text,
+	}
 }
 
 // TODO:
@@ -174,9 +193,22 @@ func (s *server) getSnippet(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, string(data))
 }
 
+func (s *server) renderUserSnippet(w http.ResponseWriter, r *http.Request) {
+	// param := chi.URLParam(r, "url")
+
+	err := s.template.Render(w, "index.page.tmpl", t)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+type templateDate struct {
+	Text string
+}
+
 func (s *server) routes() *chi.Mux {
 	r := chi.NewMux()
-	// r.Use(s.logger)
+	r.Use(s.logger)
 	r.Use(s.recoverer)
 
 	fs := http.FileServer(http.Dir("./static"))
@@ -186,9 +218,11 @@ func (s *server) routes() *chi.Mux {
 	r.Get("/", s.indexHandler)
 
 	r.Route("/snippets", func(r chi.Router) {
-		r.Post("/", s.addSnippet)
+		r.HandleFunc("/", s.addSnippet)
 		r.Get("/{id}", s.getSnippet)
 	})
+
+	r.Get("/{url:[Aa-zZ]+}", s.renderUserSnippet)
 
 	return r
 }

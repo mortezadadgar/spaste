@@ -23,7 +23,7 @@ textarea {
 	border: none;
 }
 
-.header {
+header {
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
@@ -32,37 +32,33 @@ textarea {
 	background-color: #1d2026;
 }
 
-.header__start {
+.header__brand {
 	color: white;
 	font-size: 1.2em;
 }
 
-.header__middle {
+.header__address {
 	display: flex;
 	flex-direction: row;
 	margin-right: auto;
 	margin-left: 25px;
 }
 
-.address-input {
+#header__input {
 	background-color: #1d2026;
 	color: white;
 	border-bottom: 1px solid white;
 	margin-right: 10px;
 	caret-color: white;
 	width: 300px;
-	margin-bottom: 2px; /* inline with save icon */
+	margin-bottom: 3px; /* inline with save icon */
 }
 
-.js-header__save {
-	background-image: url("./../svg/save.svg");
-}
-
-.address-input:focus {
+#header__input:focus {
 	border-bottom: 1px solid var(--color-blue);
 }
 
-.header__end {
+.header__buttons {
 	display: flex;
 	gap: 20px;
 	justify-content: space-between;
@@ -77,15 +73,7 @@ textarea {
 	cursor: pointer;
 }
 
-.header__share {
-	background-image: url("./../svg/share.svg");
-}
-
-.header__sun {
-	background-image: url("./../svg/sun.svg");
-}
-
-.js-main__input {
+#main__input {
 	width: 100%;
 	height: 100vh;
 	background-color: #282c34;

@@ -1,20 +1,26 @@
 "use strict";
 
-const saveButton = document.querySelector(".js-header__save");
+const saveButton = document.getElementById("header__save");
 saveButton.addEventListener(
 	"click",
 	async function () {
-		const inpuText = document.querySelector(".js-main__input");
-		const data = inpuText.value;
+		const textAreaValue = document.getElementById("main__input");
+		const headerInput = document.getElementById("header__input");
 
-		const resp = await fetch("/snippets", {
+		const response = await fetch("/snippets", {
 			method: "POST",
-			body: JSON.stringify({ snippet : { data: data }}),
+			body: JSON.stringify({
+				snippet: { text: textAreaValue.getAttribute("value") },
+			}),
 		});
 
-		if (!resp.ok) {
-			console.log("POST /snippets request was not ok");
-		}
+		const data = await response.json();
+		const addr = data.snippet.addr;
+
+		window.location.replace(addr);
+
+		headerInput.setAttribute("value", `${window.location.host}/${addr}`);
 	},
+	// TODO: new pages get new event
 	{ once: true }
 );
