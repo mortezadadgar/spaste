@@ -2,10 +2,10 @@ package snippets
 
 import "github.com/mortezadadgar/spaste/models"
 
-// TODO: make to package useful or remove it
+// TODO: make this package useful or remove it
 type SnippetStore interface {
 	Add(text string, address string) (int, error)
-	Get(id int) (*models.Snippet, error)
+	Get(addr string) *models.Snippet
 }
 
 type Snippet struct {
@@ -22,8 +22,8 @@ func (s *Snippet) Add(text string, address string) (int, error) {
 	return s.store.Add(text, address)
 }
 
-func (s *Snippet) Get(id int) (*models.Snippet, error) {
-	return s.store.Get(id)
+func (s *Snippet) Get(addr string) *models.Snippet {
+	return s.store.Get(addr)
 }
 
 func (s *Snippet) Delete(int) error {

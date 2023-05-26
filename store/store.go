@@ -33,14 +33,14 @@ func (i *InMemoryStore) Add(text string, address string) (int, error) {
 	return i.getLastID(), nil
 }
 
-func (i *InMemoryStore) Get(id int) (*models.Snippet, error) {
+func (i *InMemoryStore) Get(addr string) *models.Snippet {
 	for _, model := range i.models {
-		if model.Id == id {
-			return &model, nil
+		if model.Address == addr {
+			return &model
 		}
 	}
 
-	return nil, nil
+	return nil
 }
 
 func (i *InMemoryStore) getLastID() int {

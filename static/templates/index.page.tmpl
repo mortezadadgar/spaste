@@ -1,7 +1,7 @@
 {{ block "base" . }}
 	<!-- TODO:
-	- svg icons(save, sun, share) DONE
 	- hover on svg icons and input
+	- change save button with animation
 	- line numbers
 	- copy to clipboard
 	- test code
@@ -20,7 +20,7 @@
 			<header>
 				<div class="header__brand">Simple Paste</div>
 				<div class="header__address">
-					<input id="header__input" />
+					<input id="header__input" value="{{ .Address }}" />
 					<div id="header__save">
 						<img class="header__icons" src="./static/svg/save.svg" />
 					</div>
@@ -37,9 +37,7 @@
 				</div>
 			</header>
 			<main>
-				<textarea id="main__input" type="text" spellcheck="false" autofocus>
-{{ .Text }}</textarea
-				>
+				<textarea id="main__input" type="text" spellcheck="false" autofocus>{{ .Text }}</textarea>
 			</main>
 			<footer></footer>
 		</body>

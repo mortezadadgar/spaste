@@ -9,11 +9,11 @@ import (
 	"io"
 	"log"
 	"math/big"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"runtime/debug"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -30,10 +30,9 @@ type templateData struct {
 }
 
 type server struct {
-	cfg          *config.Config
-	template     *template.Template
-	snippet      *snippets.Snippet
-	templateData *templateData
+	cfg      *config.Config
+	template *template.Template
+	snippet  *snippets.Snippet
 }
 
 func NewServer(cfg *config.Config, template *template.Template, snippet *snippets.Snippet) server {
@@ -79,8 +78,7 @@ func (s *server) recoverer(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				w.Header().Set("Connection", "close")
-				w.WriteHeader(http.StatusInternalServerError)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
 				log.Printf("%s\nSTACK: %s", err, debug.Stack())
 			}
 		}()
@@ -110,18 +108,14 @@ func genRandAddr(len int64) (string, error) {
 	}
 
 	return string(buffer), nil
-	// return "hbhhdifdhg", nil // HACK
 }
 
 type envelope struct {
 	Snippet interface{} `json:"snippet"`
 }
 
-// BAD BAD BAD
-var t templateData
-
 // TODO:
-// - unlikley: check on repetitive addresses
+// - unlikely: check on repetitive addresses
 func (s *server) addSnippet(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -160,55 +154,29 @@ func (s *server) addSnippet(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	log.Printf("%d: %s\n", id, output.Addr)
-
-	t = templateData{
-		Addr: output.Addr,
-		Text: input.Text,
-	}
-}
-
-// TODO:
-//   - handle errors
-//   - multiple requests
-func (s *server) getSnippet(w http.ResponseWriter, r *http.Request) {
-	param := chi.URLParam(r, "id")
-
-	id, err := strconv.Atoi(param)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	snippet, err := s.snippet.Get(id)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	data, err := json.Marshal(snippet)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprint(w, string(data))
+	log.Printf("%d: %s, Text: %s\n", id, output.Addr, input.Text)
 }
 
 func (s *server) renderUserSnippet(w http.ResponseWriter, r *http.Request) {
-	// param := chi.URLParam(r, "url")
+	addr := chi.URLParam(r, "addr")
 
-	err := s.template.Render(w, "index.page.tmpl", t)
-	if err != nil {
-		log.Fatal(err)
+	if len(addr) == 0 {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
 	}
-}
 
-type templateDate struct {
-	Text string
+	snippet := s.snippet.Get(addr)
+	if snippet == nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	_ = s.template.Render(w, "index.page.tmp", snippet)
 }
 
 func (s *server) routes() *chi.Mux {
 	r := chi.NewMux()
-	r.Use(s.logger)
+	// r.Use(s.logger)
 	r.Use(s.recoverer)
 
 	fs := http.FileServer(http.Dir("./static"))
@@ -219,10 +187,9 @@ func (s *server) routes() *chi.Mux {
 
 	r.Route("/snippets", func(r chi.Router) {
 		r.HandleFunc("/", s.addSnippet)
-		r.Get("/{id}", s.getSnippet)
 	})
 
-	r.Get("/{url:[Aa-zZ]+}", s.renderUserSnippet)
+	r.Get("/{addr:[Aa-zZ]+}", s.renderUserSnippet)
 
 	return r
 }
@@ -243,13 +210,17 @@ func (s *server) Start() {
 		close(sig)
 		err := srv.Shutdown(ctx)
 		if err != nil {
-			log.Fatal("unable to shutdown the server!")
+			log.Println("unable to shutdown the server!")
+			os.Exit(1)
 		}
 	}()
 
-	log.Printf("Started server on address %s", s.cfg.Address)
+	log.Printf("Started server on address %s\n", s.cfg.Address)
 
-	log.Fatal(srv.ListenAndServe())
+	err := net.Listen("tcp", s.cfg.Address)
+	if err := srv.ListenAndServe(); err != nil {
+		log.Println(err)
+	}
 }
 
 // - error handling -
