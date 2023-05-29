@@ -11,24 +11,21 @@ import (
 )
 
 func main() {
-	cfg, err := config.New()
+	sonfig, err := config.New()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	t, err := template.New(cfg.StaticBase+"/templates/", false)
+	template, err := template.New(sonfig.StaticBase+"/templates/", false)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	store := store.NewStore()
+	store := store.New()
 
-	s, err := snippets.NewSnippets(store)
-	if err != nil {
-		log.Fatal(err)
-	}
+	snippet := snippets.New(store)
 
-	server := http.NewServer(cfg, t, s)
+	server := http.New(sonfig, template, snippet)
 
 	server.Start()
 }

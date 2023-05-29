@@ -1,15 +1,18 @@
 package http
 
+// TODO:
+//      - logger: try to add status code. ref: https://ndersson.me/post/capturing_status_code_in_net_http/
+//      - addSnippet: unlikely: check on repetitive addresses
+//      - addSnippet: append filetype when formats when syntax highlighting in available
+
 import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
 	"math/big"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -24,26 +27,20 @@ import (
 	"github.com/mortezadadgar/spaste/template"
 )
 
-type templateData struct {
-	Text string // TODO: do we need a bigger type
-	Addr string
-}
-
 type server struct {
 	cfg      *config.Config
 	template *template.Template
 	snippet  *snippets.Snippet
 }
 
-func NewServer(cfg *config.Config, template *template.Template, snippet *snippets.Snippet) server {
+// New returns a new instance of server
+func New(cfg *config.Config, template *template.Template, snippet *snippets.Snippet) server {
 	return server{
 		cfg:      cfg,
 		template: template,
 		snippet:  snippet,
 	}
 }
-
-// - midlewares -
 
 func disallowRootFS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -56,7 +53,6 @@ func disallowRootFS(next http.Handler) http.Handler {
 }
 
 // "GET http://localhost:8080/ HTTP/1.1" from 127.0.0.1:58300 - 200 2057B in 96.831µs
-// TODO: try to add status code. ref: https://ndersson.me/post/capturing_status_code_in_net_http/
 func (s *server) logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		now := time.Now()
@@ -78,7 +74,7 @@ func (s *server) recoverer(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				s.template.Render(w, "error.page.tmpl", nil)
 				log.Printf("%s\nSTACK: %s", err, debug.Stack())
 			}
 		}()
@@ -87,39 +83,22 @@ func (s *server) recoverer(next http.Handler) http.Handler {
 	})
 }
 
-// - routes -
-
 func (s *server) indexHandler(w http.ResponseWriter, _ *http.Request) {
-	err := s.template.Render(w, "index.page.tmpl", nil)
+	err := s.template.Render(w, "ndex.page.tmpl", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func genRandAddr(len int64) (string, error) {
-	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	buffer := make([]byte, len)
-	for i := range buffer {
-		r, err := rand.Int(rand.Reader, big.NewInt(len))
-		if err != nil {
-			return "", err
-		}
-		buffer[i] = letters[r.Int64()]
-	}
-
-	return string(buffer), nil
 }
 
 type envelope struct {
 	Snippet interface{} `json:"snippet"`
 }
 
-// TODO:
-// - unlikely: check on repetitive addresses
 func (s *server) addSnippet(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 
 	var input struct {
@@ -128,22 +107,24 @@ func (s *server) addSnippet(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(b, &envelope{&input})
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 
 	var output struct {
 		Addr string `json:"addr"`
 	}
 
-	// TODO: append filetype when formats when syntax highlighting in available
 	output.Addr, err = genRandAddr(10)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 
 	resp, err := json.Marshal(envelope{output})
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -151,7 +132,8 @@ func (s *server) addSnippet(w http.ResponseWriter, r *http.Request) {
 
 	id, err := s.snippet.Add(input.Text, output.Addr)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 
 	log.Printf("%d: %s, Text: %s\n", id, output.Addr, input.Text)
@@ -167,16 +149,26 @@ func (s *server) renderUserSnippet(w http.ResponseWriter, r *http.Request) {
 
 	snippet := s.snippet.Get(addr)
 	if snippet == nil {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		s.notFoundHandler(w, r)
 		return
 	}
 
-	_ = s.template.Render(w, "index.page.tmp", snippet)
+	err := s.template.Render(w, "ndex.page.tmpl", snippet)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func (s *server) notFoundHandler(w http.ResponseWriter, r *http.Request) {
+	err := s.template.Render(w, "404.page.tmpl", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (s *server) routes() *chi.Mux {
 	r := chi.NewMux()
-	// r.Use(s.logger)
+	r.Use(s.logger)
 	r.Use(s.recoverer)
 
 	fs := http.FileServer(http.Dir("./static"))
@@ -191,9 +183,12 @@ func (s *server) routes() *chi.Mux {
 
 	r.Get("/{addr:[Aa-zZ]+}", s.renderUserSnippet)
 
+	r.NotFound(s.notFoundHandler)
+
 	return r
 }
 
+// Start setup the server and eventually start it
 func (s *server) Start() {
 	srv := http.Server{
 		Addr:    fmt.Sprintf(":%s", s.cfg.Address),
@@ -211,30 +206,26 @@ func (s *server) Start() {
 		err := srv.Shutdown(ctx)
 		if err != nil {
 			log.Println("unable to shutdown the server!")
-			os.Exit(1)
 		}
 	}()
 
 	log.Printf("Started server on address %s\n", s.cfg.Address)
 
-	err := net.Listen("tcp", s.cfg.Address)
 	if err := srv.ListenAndServe(); err != nil {
 		log.Println(err)
 	}
 }
 
-// - error handling -
-
-func logError(r *http.Request, message string) {
-	log.Printf("ERROR: %s %s: %s", r.Method, r.URL.Path, message)
-}
-
-func (s *server) Error(w http.ResponseWriter, r *http.Request, code int, message error) {
-	// hide server errors from users
-	if code == http.StatusInternalServerError {
-		logError(r, message.Error())
-		message = errors.New("internal server error")
+func genRandAddr(len int64) (string, error) {
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	buffer := make([]byte, len)
+	for i := range buffer {
+		r, err := rand.Int(rand.Reader, big.NewInt(len))
+		if err != nil {
+			return "", err
+		}
+		buffer[i] = letters[r.Int64()]
 	}
 
-	http.Error(w, message.Error(), code)
+	return string(buffer), nil
 }

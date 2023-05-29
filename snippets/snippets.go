@@ -12,10 +12,11 @@ type Snippet struct {
 	store SnippetStore
 }
 
-func NewSnippets(store SnippetStore) (*Snippet, error) {
+// New returns a instance of SnippetStore
+func New(store SnippetStore) *Snippet {
 	return &Snippet{
 		store: store,
-	}, nil
+	}
 }
 
 func (s *Snippet) Add(text string, address string) (int, error) {

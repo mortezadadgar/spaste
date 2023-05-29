@@ -13,6 +13,8 @@ type Template struct {
 	templateMap map[string]*template.Template
 }
 
+// New returns a new instance of Template
+//
 // caller must have files named in *.page.tmpl format.
 func New(dir string, hasLayout bool) (*Template, error) {
 	r := &Template{

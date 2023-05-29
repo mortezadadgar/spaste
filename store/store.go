@@ -10,10 +10,12 @@ import (
 //   - NoSQL eg. MongoDB
 //
 // NOTE: this package is a adaptor to all implementations
-// type Store struct {
-// }
 
-func NewStore() *InMemoryStore {
+type Store struct {
+}
+
+// New returns a new instance of InMemoryStore
+func New() *InMemoryStore {
 	return &InMemoryStore{}
 }
 

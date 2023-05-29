@@ -17,6 +17,10 @@ body {
 	background-color: #282c34;
 }
 
+a {
+	text-decoration: none;
+}
+
 input,
 textarea {
 	outline: none;
@@ -78,5 +82,29 @@ header {
 	height: 100vh;
 	background-color: #282c34;
 	caret-color: white;
+	color: white;
+}
+
+.message-container {
+	border: 2px white solid;
+	padding: 20px;
+	color: white;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	text-align: center;
+	line-height: 32px;
+}
+
+.container__home {
+	cursor: pointer;
+	background-color: white;
+	color: #282c34;;
+}
+
+.container__home:hover {
+	transition: color 200ms ease-in-out;
+	background-color: #282c34;
 	color: white;
 }

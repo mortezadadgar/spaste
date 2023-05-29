@@ -16,6 +16,7 @@ type Config struct {
 	Production bool   `env:"PRODUCTION"`
 }
 
+// New returns a new instance of Config
 func New() (*Config, error) {
 	err := godotenv.Load()
 	if err != nil {
