@@ -14,20 +14,19 @@ import (
 type Store struct {
 }
 
-// New returns a new instance of InMemoryStore
+// New returns a new instance of InMemoryStore.
 func New() *InMemoryStore {
 	return &InMemoryStore{}
 }
 
 type InMemoryStore struct {
-	model  models.Snippet
 	models []models.Snippet
 }
 
-// TODO: find a solution for not calling getLastID in multiple places
+// TODO: find a solution for not calling getLastID in multiple places.
 func (i *InMemoryStore) Add(text string, address string) (int, error) {
 	i.models = append(i.models, models.Snippet{
-		Id:      i.getLastID() + 1,
+		ID:      i.getLastID() + 1,
 		Text:    text,
 		Address: address,
 	})
@@ -47,7 +46,7 @@ func (i *InMemoryStore) Get(addr string) *models.Snippet {
 
 func (i *InMemoryStore) getLastID() int {
 	if len(i.models) > 0 {
-		return i.models[len(i.models)-1].Id
+		return i.models[len(i.models)-1].ID
 	}
 	return 0
 }

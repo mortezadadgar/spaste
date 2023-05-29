@@ -2,7 +2,7 @@ package snippets
 
 import "github.com/mortezadadgar/spaste/models"
 
-// TODO: make this package useful or remove it
+// TODO: make this package useful or remove it.
 type SnippetStore interface {
 	Add(text string, address string) (int, error)
 	Get(addr string) *models.Snippet
@@ -12,7 +12,7 @@ type Snippet struct {
 	store SnippetStore
 }
 
-// New returns a instance of SnippetStore
+// New returns a instance of SnippetStore.
 func New(store SnippetStore) *Snippet {
 	return &Snippet{
 		store: store,

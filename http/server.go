@@ -27,15 +27,15 @@ import (
 	"github.com/mortezadadgar/spaste/template"
 )
 
-type server struct {
+type Server struct {
 	cfg      *config.Config
 	template *template.Template
 	snippet  *snippets.Snippet
 }
 
-// New returns a new instance of server
-func New(cfg *config.Config, template *template.Template, snippet *snippets.Snippet) server {
-	return server{
+// New returns a new instance of server.
+func New(cfg *config.Config, template *template.Template, snippet *snippets.Snippet) Server {
+	return Server{
 		cfg:      cfg,
 		template: template,
 		snippet:  snippet,
@@ -52,8 +52,7 @@ func disallowRootFS(next http.Handler) http.Handler {
 	})
 }
 
-// "GET http://localhost:8080/ HTTP/1.1" from 127.0.0.1:58300 - 200 2057B in 96.831µs
-func (s *server) logger(next http.Handler) http.Handler {
+func (s *Server) logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		now := time.Now()
 
@@ -70,11 +69,14 @@ func (s *server) logger(next http.Handler) http.Handler {
 	})
 }
 
-func (s *server) recoverer(next http.Handler) http.Handler {
+func (s *Server) recoverer(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				s.template.Render(w, "error.page.tmpl", nil)
+				err := s.template.Render(w, "error.page.tmpl", nil)
+				if err != nil {
+					log.Fatal(err)
+				}
 				log.Printf("%s\nSTACK: %s", err, debug.Stack())
 			}
 		}()
@@ -83,7 +85,7 @@ func (s *server) recoverer(next http.Handler) http.Handler {
 	})
 }
 
-func (s *server) indexHandler(w http.ResponseWriter, _ *http.Request) {
+func (s *Server) indexHandler(w http.ResponseWriter, _ *http.Request) {
 	err := s.template.Render(w, "ndex.page.tmpl", nil)
 	if err != nil {
 		log.Fatal(err)
@@ -94,7 +96,7 @@ type envelope struct {
 	Snippet interface{} `json:"snippet"`
 }
 
-func (s *server) addSnippet(w http.ResponseWriter, r *http.Request) {
+func (s *Server) addSnippet(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Println(err)
@@ -128,7 +130,11 @@ func (s *server) addSnippet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 
 	id, err := s.snippet.Add(input.Text, output.Addr)
 	if err != nil {
@@ -139,7 +145,7 @@ func (s *server) addSnippet(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%d: %s, Text: %s\n", id, output.Addr, input.Text)
 }
 
-func (s *server) renderUserSnippet(w http.ResponseWriter, r *http.Request) {
+func (s *Server) renderUserSnippet(w http.ResponseWriter, r *http.Request) {
 	addr := chi.URLParam(r, "addr")
 
 	if len(addr) == 0 {
@@ -159,14 +165,14 @@ func (s *server) renderUserSnippet(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *server) notFoundHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) notFoundHandler(w http.ResponseWriter, _ *http.Request) {
 	err := s.template.Render(w, "404.page.tmpl", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func (s *server) routes() *chi.Mux {
+func (s *Server) routes() *chi.Mux {
 	r := chi.NewMux()
 	r.Use(s.logger)
 	r.Use(s.recoverer)
@@ -188,8 +194,8 @@ func (s *server) routes() *chi.Mux {
 	return r
 }
 
-// Start setup the server and eventually start it
-func (s *server) Start() {
+// Start setup the server and eventually start it.
+func (s *Server) Start() {
 	srv := http.Server{
 		Addr:    fmt.Sprintf(":%s", s.cfg.Address),
 		Handler: s.routes(),
@@ -216,11 +222,11 @@ func (s *server) Start() {
 	}
 }
 
-func genRandAddr(len int64) (string, error) {
+func genRandAddr(length int64) (string, error) {
 	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	buffer := make([]byte, len)
+	buffer := make([]byte, length)
 	for i := range buffer {
-		r, err := rand.Int(rand.Reader, big.NewInt(len))
+		r, err := rand.Int(rand.Reader, big.NewInt(length))
 		if err != nil {
 			return "", err
 		}
