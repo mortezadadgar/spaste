@@ -1,0 +1,46 @@
+{{ define "base" }}
+	<!-- TODO:
+	- hover on svg icons and input
+	- change save button with animation
+	- line numbers
+	- copy to clipboard
+	- syntax highlighting HOW?
+-->
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<title>{{ template "title" . }}</title>
+			<meta charset="UTF-8" />
+			<meta name="viewport" content="width=device-width, initial-scale=1" />
+			<link href="./static/styles/style.css" rel="stylesheet" />
+			<link href="./static/styles/chroma.css" rel="stylesheet" />
+			<script src="./static/js/script.js" defer></script>
+		</head>
+		<body>
+			<header>
+				<div class="header__brand">Simple Paste</div>
+				<div class="header__address">
+					<input class="header__input" type="text" value="{{ .Address }}" />
+					{{ template "select" }}
+					<div class="header__save">
+						<img class="header__icons" src="./static/svg/save.svg" />
+					</div>
+				</div>
+				<div class="header__buttons">
+					<!-- TODO: copy to clipboard -->
+					<div class="header__share">
+						<img class="header__icons" src="./static/svg/share.svg" />
+					</div>
+					<!-- TODO: change to moon on click -->
+					<div class="header__theme">
+						<img class="header__icons" src="./static/svg/sun.svg" />
+					</div>
+				</div>
+			</header>
+			<main>
+				{{ template "main" . }}
+			</main>
+			<footer></footer>
+		</body>
+	</html>
+{{ end }}

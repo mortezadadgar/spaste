@@ -1,45 +1,26 @@
-{{ block "base" . }}
-	<!-- TODO:
-	- hover on svg icons and input
-	- change save button with animation
-	- line numbers
-	- copy to clipboard
-	- test code
-	- syntax highlighting HOW?
--->
-	<!DOCTYPE html>
-	<html lang="en">
-		<head>
-			<title>Simple paste</title>
-			<meta charset="UTF-8" />
-			<meta name="viewport" content="width=device-width, initial-scale=1" />
-			<link href="./static/styles/style.css" rel="stylesheet" />
-			<script src="./static/js/script.js" defer></script>
-		</head>
-		<body>
-			<header>
-				<div class="header__brand">Simple Paste</div>
-				<div class="header__address">
-					<input id="header__input" value="{{ .Address }}" />
-					<div id="header__save">
-						<img class="header__icons" src="./static/svg/save.svg" />
-					</div>
-				</div>
-				<div class="header__buttons">
-					<!-- TODO: copy to clipboard -->
-					<div class="header__share">
-						<img class="header__icons" src="./static/svg/share.svg" />
-					</div>
-					<!-- TODO: change to moon on click -->
-					<div class="header__theme">
-						<img class="header__icons" src="./static/svg/sun.svg" />
-					</div>
-				</div>
-			</header>
-			<main>
-				<textarea id="main__input" type="text" spellcheck="false" autofocus>{{ .Text }}</textarea>
-			</main>
-			<footer></footer>
-		</body>
-	</html>
+{{ template "base" . }}
+{{ define "title" }}
+	Simple Paste
+{{ end }}
+{{ define "select" }}
+	<select class="header__select">
+		<option value="text">Text only</option>
+		<option value="bash">Bash</option>
+		<option value="go">Golang</option>
+		<option value="c">C</option>
+		<option value="css">CSS</option>
+		<option value="cpp">HTML</option>
+		<option value="python">Python</option>
+		<option value="ruby">Ruby</option>
+		<option value="rust">Rust</option>
+		<option value="javascript">Javascript</option>
+	</select>
+{{ end }}
+{{ define "main" }}
+	<textarea
+		class="main__input"
+		type="text"
+		spellcheck="false"
+		autofocus
+	></textarea>
 {{ end }}

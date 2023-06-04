@@ -2,17 +2,17 @@
 
 // TODO:
 // - hijack ctrl-s
-const saveButton = document.getElementById("header__save");
+const saveButton = document.querySelector(".header__save");
 saveButton.addEventListener(
 	"click",
 	async function () {
-		const textAreaValue = document.getElementById("main__input");
-		console.log(textAreaValue.value);
+		const mainInput = document.querySelector(".main__input");
+		const headerSelect = document.querySelector(".header__select");
 
 		const response = await fetch("/snippets", {
 			method: "POST",
 			body: JSON.stringify({
-				snippet: { text: textAreaValue.value },
+				snippet: { text: mainInput.value, lang: headerSelect.value },
 			}),
 		});
 

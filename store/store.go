@@ -24,14 +24,15 @@ type InMemoryStore struct {
 }
 
 // TODO: find a solution for not calling getLastID in multiple places.
-func (i *InMemoryStore) Add(text string, address string) (int, error) {
+func (i *InMemoryStore) Add(text string, lang string, address string) int {
 	i.models = append(i.models, models.Snippet{
 		ID:      i.getLastID() + 1,
 		Text:    text,
+		Lang:    lang,
 		Address: address,
 	})
 
-	return i.getLastID(), nil
+	return i.getLastID()
 }
 
 func (i *InMemoryStore) Get(addr string) *models.Snippet {

@@ -2,15 +2,29 @@ package template
 
 import (
 	"errors"
+	"fmt"
 	"html/template"
 	"net/http"
 	"path/filepath"
+)
+
+var (
+	ErrTemplateFileNotFound = errors.New("no template page file found")
 )
 
 type Template struct {
 	dir         string
 	hasLayout   bool
 	templateMap map[string]*template.Template
+}
+
+var Data struct {
+	Address         string
+	TextHighlighted template.HTML
+}
+
+func ToHTML(s string) template.HTML {
+	return template.HTML(s)
 }
 
 // New returns a new instance of Template
@@ -31,10 +45,11 @@ func New(dir string, hasLayout bool) (*Template, error) {
 	return r, nil
 }
 
+// Rende executes template by its name.
 func (r *Template) Render(w http.ResponseWriter, name string, data any) error {
 	err := r.templateMap[name].ExecuteTemplate(w, name, data)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to execute template name %s: %v", name, err)
 	}
 
 	return nil
@@ -43,9 +58,9 @@ func (r *Template) Render(w http.ResponseWriter, name string, data any) error {
 func (r *Template) cacheTemplate() error {
 	pages, err := filepath.Glob(filepath.Join(r.dir, "*.page.tmpl"))
 	if len(pages) < 1 {
-		return errors.New("no template page found")
+		return ErrTemplateFileNotFound
 	} else if err != nil {
-		return err
+		return fmt.Errorf("failed to find template pages: %v", err)
 	}
 
 	cache := r.templateMap
@@ -53,13 +68,13 @@ func (r *Template) cacheTemplate() error {
 		name := filepath.Base(page)
 		tmpl, err := template.New(name).ParseFiles(page)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to parse template page %s: %v", page, err)
 		}
 
 		if r.hasLayout {
 			tmpl, err = tmpl.ParseGlob(filepath.Join(r.dir, "*.layout.tmpl"))
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to parse layout templates: %v", err)
 			}
 		}
 

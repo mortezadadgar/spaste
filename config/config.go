@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/caarlos0/env/v8"
 	"github.com/joho/godotenv"
 )
@@ -16,17 +18,17 @@ type Config struct {
 	Production bool   `env:"PRODUCTION"`
 }
 
-// New returns a new instance of Config
+// New returns a new instance of Config.
 func New() (*Config, error) {
 	err := godotenv.Load()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to return Config: %v", err)
 	}
 
 	var cfg Config
 	err = env.Parse(&cfg)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to return Config: %v", err)
 	}
 
 	return &cfg, nil

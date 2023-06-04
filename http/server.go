@@ -4,8 +4,11 @@ package http
 //      - logger: try to add status code. ref: https://ndersson.me/post/capturing_status_code_in_net_http/
 //      - addSnippet: unlikely: check on repetitive addresses
 //      - addSnippet: append filetype when formats when syntax highlighting in available
+//		- addSnippet: show a popup on empty text
+//      - strings builder?
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/json"
@@ -21,6 +24,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alecthomas/chroma"
+	"github.com/alecthomas/chroma/formatters/html"
+	"github.com/alecthomas/chroma/lexers"
+	"github.com/alecthomas/chroma/styles"
 	"github.com/go-chi/chi"
 	"github.com/mortezadadgar/spaste/config"
 	"github.com/mortezadadgar/spaste/snippets"
@@ -85,15 +92,22 @@ func (s *Server) recoverer(next http.Handler) http.Handler {
 	})
 }
 
+func (s *Server) ServerError(w http.ResponseWriter, _ *http.Request) {
+	err := s.template.Render(w, "error.page.tmpl", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func (s *Server) indexHandler(w http.ResponseWriter, _ *http.Request) {
-	err := s.template.Render(w, "ndex.page.tmpl", nil)
+	err := s.template.Render(w, "index.page.tmpl", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
 type envelope struct {
-	Snippet interface{} `json:"snippet"`
+	Snippet any `json:"snippet"`
 }
 
 func (s *Server) addSnippet(w http.ResponseWriter, r *http.Request) {
@@ -105,6 +119,7 @@ func (s *Server) addSnippet(w http.ResponseWriter, r *http.Request) {
 
 	var input struct {
 		Text string `json:"text"`
+		Lang string `json:"lang"`
 	}
 
 	err = json.Unmarshal(b, &envelope{&input})
@@ -136,13 +151,10 @@ func (s *Server) addSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := s.snippet.Add(input.Text, output.Addr)
-	if err != nil {
-		log.Println(err)
-		return
-	}
+	// TODO: send a single struct instead
+	ID := s.snippet.Add(input.Text, input.Lang, output.Addr)
 
-	log.Printf("%d: %s, Text: %s\n", id, output.Addr, input.Text)
+	log.Printf("%d: %s, Text: %s, Lang: %s\n", ID, output.Addr, input.Text, input.Lang)
 }
 
 func (s *Server) renderUserSnippet(w http.ResponseWriter, r *http.Request) {
@@ -153,15 +165,44 @@ func (s *Server) renderUserSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// NOTE: maybe we should return interface here
 	snippet := s.snippet.Get(addr)
 	if snippet == nil {
 		s.notFoundHandler(w, r)
 		return
 	}
 
-	err := s.template.Render(w, "ndex.page.tmpl", snippet)
+	lexer := lexers.Get(snippet.Lang)
+	if lexer == nil {
+		lexer = lexers.Fallback
+	}
+	lexer = chroma.Coalesce(lexer)
+
+	formatter := html.New(html.WithClasses(true))
+
+	iterator, err := lexer.Tokenise(nil, string(snippet.Text))
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
+	}
+
+	style := styles.Get("doom-one")
+	if style == nil {
+		style = styles.Fallback
+	}
+
+	buf := new(bytes.Buffer)
+	err = formatter.Format(buf, style, iterator)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// convert from string to template.HTML
+	template.Data.TextHighlighted = template.ToHTML(buf.String())
+	template.Data.Address = fmt.Sprintf("%s/%s", r.Host, snippet.Address)
+
+	err = s.template.Render(w, "snippet.page.tmpl", template.Data)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
@@ -228,7 +269,7 @@ func genRandAddr(length int64) (string, error) {
 	for i := range buffer {
 		r, err := rand.Int(rand.Reader, big.NewInt(length))
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("failed to generate random addresses: %v", err)
 		}
 		buffer[i] = letters[r.Int64()]
 	}

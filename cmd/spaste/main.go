@@ -16,7 +16,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	template, err := template.New(sonfig.StaticBase+"/templates/", false)
+	template, err := template.New(sonfig.StaticBase+"/templates/", true)
 	if err != nil {
 		log.Fatal(err)
 	}

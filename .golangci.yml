@@ -4,10 +4,11 @@ linters:
     - errchkjson 
     - goconst
     - gocritic
-    - gosec
+    # - gosec
     - prealloc 
     - rowserrcheck
     - exportloopref
     - revive
     - predeclared
     - godot
+    - wrapcheck

@@ -1,0 +1,10 @@
+{{ template "base" . }}
+{{ define "title" }}
+	Simple Paste -
+	{{ .Address }}
+{{ end }}
+{{ define "select" }}
+{{ end }}
+{{ define "main" }}
+	<div class="main__text">{{ .TextHighlighted }}</div>
+{{ end }}

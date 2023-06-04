@@ -4,7 +4,7 @@ import "github.com/mortezadadgar/spaste/models"
 
 // TODO: make this package useful or remove it.
 type SnippetStore interface {
-	Add(text string, address string) (int, error)
+	Add(text string, lang string, address string) int
 	Get(addr string) *models.Snippet
 }
 
@@ -19,8 +19,8 @@ func New(store SnippetStore) *Snippet {
 	}
 }
 
-func (s *Snippet) Add(text string, address string) (int, error) {
-	return s.store.Add(text, address)
+func (s *Snippet) Add(text string, lang string, address string) int {
+	return s.store.Add(text, lang, address)
 }
 
 func (s *Snippet) Get(addr string) *models.Snippet {

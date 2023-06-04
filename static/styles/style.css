@@ -11,10 +11,12 @@
 	--color-dark-orange: #e8830d;
 	--color-blue: #1e90ff;
 	--color-dark-blue: #0077ea;
+	--color-header: #1d2026;
+	--color-background: #282c34;
 }
 
 body {
-	background-color: #282c34;
+	background-color: var(--color-background);
 }
 
 a {
@@ -29,11 +31,18 @@ textarea {
 
 header {
 	display: flex;
+	position: sticky;
+	top: 0;
+	width: 100%;
 	flex-direction: row;
 	justify-content: space-between;
 	padding: 10px 20px;
 	font-style: italic;
-	background-color: #1d2026;
+	background-color: var(--color-header);
+}
+
+.hidden {
+	display: none;
 }
 
 .header__brand {
@@ -48,8 +57,9 @@ header {
 	margin-left: 25px;
 }
 
-#header__input {
-	background-color: #1d2026;
+/* TODO: add margin-right and margin-bottom two elements after  */
+.header__input {
+	background-color: var(--color-header);
 	color: white;
 	border-bottom: 1px solid white;
 	margin-right: 10px;
@@ -58,8 +68,16 @@ header {
 	margin-bottom: 3px; /* inline with save icon */
 }
 
-#header__input:focus {
+.header__input:focus {
 	border-bottom: 1px solid var(--color-blue);
+}
+
+.header__select {
+	background-color: var(--color-header);
+	color: white;
+	margin-right: 10px;
+	border: none;
+	outline: none;
 }
 
 .header__buttons {
@@ -77,17 +95,22 @@ header {
 	cursor: pointer;
 }
 
-#main__input {
+.main__input {
 	width: 100%;
 	height: 100vh;
-	background-color: #282c34;
+	background-color: var(--color-background);
 	caret-color: white;
 	color: white;
+	padding: 5px;
 }
 
-.message-container {
+.main__text {
+	padding: 5px;
+}
+
+.message {
 	border: 2px white solid;
-	padding: 20px;
+	padding: 20px 40px;
 	color: white;
 	position: absolute;
 	top: 50%;
@@ -97,14 +120,14 @@ header {
 	line-height: 32px;
 }
 
-.container__home {
+.message__home {
 	cursor: pointer;
 	background-color: white;
-	color: #282c34;;
+	color: var(--color-background);
 }
 
-.container__home:hover {
+.message__home:hover {
 	transition: color 200ms ease-in-out;
-	background-color: #282c34;
+	background-color: var(--color-background);
 	color: white;
 }
