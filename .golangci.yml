@@ -12,3 +12,4 @@ linters:
     - predeclared
     - godot
     - wrapcheck
+    - ifshort

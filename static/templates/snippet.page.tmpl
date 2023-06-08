@@ -6,5 +6,10 @@
 {{ define "select" }}
 {{ end }}
 {{ define "main" }}
+	<div class="main__numbers">
+		{{ range $index, $element := makeSlice .LineCount }}
+			<div class="main__number">{{ inc $index }}</div>
+		{{ end }}
+	</div>
 	<div class="main__text">{{ .TextHighlighted }}</div>
 {{ end }}

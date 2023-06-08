@@ -10,12 +10,10 @@ package http
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
-	"math/big"
 	"net/http"
 	"os"
 	"os/signal"
@@ -29,9 +27,9 @@ import (
 	"github.com/alecthomas/chroma/lexers"
 	"github.com/alecthomas/chroma/styles"
 	"github.com/go-chi/chi"
-	"github.com/mortezadadgar/spaste/config"
-	"github.com/mortezadadgar/spaste/snippets"
-	"github.com/mortezadadgar/spaste/template"
+	"github.com/mortezadadgar/spaste/internal/config"
+	"github.com/mortezadadgar/spaste/internal/snippets"
+	"github.com/mortezadadgar/spaste/internal/template"
 )
 
 type Server struct {
@@ -41,8 +39,8 @@ type Server struct {
 }
 
 // New returns a new instance of server.
-func New(cfg *config.Config, template *template.Template, snippet *snippets.Snippet) Server {
-	return Server{
+func New(cfg *config.Config, template *template.Template, snippet *snippets.Snippet) *Server {
+	return &Server{
 		cfg:      cfg,
 		template: template,
 		snippet:  snippet,
@@ -118,8 +116,9 @@ func (s *Server) addSnippet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var input struct {
-		Text string `json:"text"`
-		Lang string `json:"lang"`
+		Text      string `json:"text"`
+		Lang      string `json:"lang"`
+		LineCount int    `json:"lineCount"`
 	}
 
 	err = json.Unmarshal(b, &envelope{&input})
@@ -128,15 +127,19 @@ func (s *Server) addSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: validation
+
 	var output struct {
 		Addr string `json:"addr"`
 	}
 
-	output.Addr, err = genRandAddr(10)
+	output.Addr, err = s.snippet.MakeAddress(int64(s.cfg.AddressLength))
 	if err != nil {
 		log.Println(err)
 		return
 	}
+
+	output.Addr = fmt.Sprintf("%s.%s", output.Addr, input.Lang)
 
 	resp, err := json.Marshal(envelope{output})
 	if err != nil {
@@ -151,10 +154,12 @@ func (s *Server) addSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: send a single struct instead
-	ID := s.snippet.Add(input.Text, input.Lang, output.Addr)
+	err = s.snippet.Add(input.Text, input.Lang, input.LineCount, output.Addr)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	log.Printf("%d: %s, Text: %s, Lang: %s\n", ID, output.Addr, input.Text, input.Lang)
+	log.Printf("%s, Text: %s, Lang: %s\n", output.Addr, input.Text, input.Lang)
 }
 
 func (s *Server) renderUserSnippet(w http.ResponseWriter, r *http.Request) {
@@ -165,11 +170,13 @@ func (s *Server) renderUserSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// NOTE: maybe we should return interface here
-	snippet := s.snippet.Get(addr)
-	if snippet == nil {
+	snippet, err := s.snippet.Get(addr)
+	switch {
+	case snippet == nil:
 		s.notFoundHandler(w, r)
 		return
+	case err != nil:
+		log.Fatal(err)
 	}
 
 	lexer := lexers.Get(snippet.Lang)
@@ -199,6 +206,7 @@ func (s *Server) renderUserSnippet(w http.ResponseWriter, r *http.Request) {
 	// convert from string to template.HTML
 	template.Data.TextHighlighted = template.ToHTML(buf.String())
 	template.Data.Address = fmt.Sprintf("%s/%s", r.Host, snippet.Address)
+	template.Data.LineCount = snippet.LineCount
 
 	err = s.template.Render(w, "snippet.page.tmpl", template.Data)
 	if err != nil {
@@ -228,7 +236,7 @@ func (s *Server) routes() *chi.Mux {
 		r.HandleFunc("/", s.addSnippet)
 	})
 
-	r.Get("/{addr:[Aa-zZ]+}", s.renderUserSnippet)
+	r.Get("/{addr:[Aa-zZ.]+}", s.renderUserSnippet)
 
 	r.NotFound(s.notFoundHandler)
 
@@ -242,17 +250,18 @@ func (s *Server) Start() {
 		Handler: s.routes(),
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	go func() {
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 		<-sig
 		close(sig)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
 		err := srv.Shutdown(ctx)
 		if err != nil {
-			log.Println("unable to shutdown the server!")
+			log.Println("unable to shutdown the server, exiting!")
+			cancel()
+			os.Exit(1)
 		}
 	}()
 
@@ -261,18 +270,4 @@ func (s *Server) Start() {
 	if err := srv.ListenAndServe(); err != nil {
 		log.Println(err)
 	}
-}
-
-func genRandAddr(length int64) (string, error) {
-	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	buffer := make([]byte, length)
-	for i := range buffer {
-		r, err := rand.Int(rand.Reader, big.NewInt(length))
-		if err != nil {
-			return "", fmt.Errorf("failed to generate random addresses: %v", err)
-		}
-		buffer[i] = letters[r.Int64()]
-	}
-
-	return string(buffer), nil
 }

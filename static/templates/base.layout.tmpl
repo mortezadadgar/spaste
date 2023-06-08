@@ -2,9 +2,7 @@
 	<!-- TODO:
 	- hover on svg icons and input
 	- change save button with animation
-	- line numbers
 	- copy to clipboard
-	- syntax highlighting HOW?
 -->
 	<!DOCTYPE html>
 	<html lang="en">
@@ -21,7 +19,7 @@
 				<div class="header__brand">Simple Paste</div>
 				<div class="header__address">
 					<input class="header__input" type="text" value="{{ .Address }}" />
-					{{ template "select" }}
+					{{ template "select" . }}
 					<div class="header__save">
 						<img class="header__icons" src="./static/svg/save.svg" />
 					</div>

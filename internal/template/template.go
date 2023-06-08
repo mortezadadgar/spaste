@@ -21,6 +21,7 @@ type Template struct {
 var Data struct {
 	Address         string
 	TextHighlighted template.HTML
+	LineCount       int
 }
 
 func ToHTML(s string) template.HTML {
@@ -37,8 +38,7 @@ func New(dir string, hasLayout bool) (*Template, error) {
 		templateMap: make(map[string]*template.Template),
 	}
 
-	err := r.cacheTemplate()
-	if err != nil {
+	if err := r.cacheTemplate(); err != nil {
 		return nil, err
 	}
 
@@ -57,16 +57,28 @@ func (r *Template) Render(w http.ResponseWriter, name string, data any) error {
 
 func (r *Template) cacheTemplate() error {
 	pages, err := filepath.Glob(filepath.Join(r.dir, "*.page.tmpl"))
-	if len(pages) < 1 {
+	switch {
+	case len(pages) < 1:
 		return ErrTemplateFileNotFound
-	} else if err != nil {
+	case err != nil:
 		return fmt.Errorf("failed to find template pages: %v", err)
+	}
+
+	funcMap := template.FuncMap{
+		// increment values
+		"inc": func(i int) int {
+			return i + 1
+		},
+		// make integer iterable
+		"makeSlice": func(i int) []int {
+			return make([]int, i)
+		},
 	}
 
 	cache := r.templateMap
 	for _, page := range pages {
 		name := filepath.Base(page)
-		tmpl, err := template.New(name).ParseFiles(page)
+		tmpl, err := template.New(name).Funcs(funcMap).ParseFiles(page)
 		if err != nil {
 			return fmt.Errorf("failed to parse template page %s: %v", page, err)
 		}

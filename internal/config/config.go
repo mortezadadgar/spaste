@@ -8,27 +8,28 @@ import (
 )
 
 type Config struct {
-	Address      string `env:"ADDRESS"`
-	SecretKey    string `env:"SECRET_KEY,unset"`
-	PasswordCost int    `env:"PASSWORD_COST"`
+	Address string `env:"ADDRESS,required"`
 
-	ConnectionString string `env:"CONNECTION_STRING"`
+	ConnectionString string `env:"CONNECTION_STRING,required"`
 
-	StaticBase string `env:"STATIC_BASE"`
+	StaticBase string `env:"STATIC_BASE,required"`
 	Production bool   `env:"PRODUCTION"`
+
+	// snippets
+	AddressLength int `env:"ADDRESS_LENGTH,required"`
 }
 
 // New returns a new instance of Config.
 func New() (*Config, error) {
 	err := godotenv.Load()
 	if err != nil {
-		return nil, fmt.Errorf("failed to return Config: %v", err)
+		return nil, fmt.Errorf("failed to load godotenv: %v", err)
 	}
 
 	var cfg Config
 	err = env.Parse(&cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to return Config: %v", err)
+		return nil, fmt.Errorf("failed to parse struct config: %v", err)
 	}
 
 	return &cfg, nil
