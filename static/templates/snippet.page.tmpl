@@ -4,7 +4,7 @@
 	{{ .Address }}
 {{ end }}
 {{ define "address" }}
-	<input class="header__input" type="text" value="{{ .Address }}" />
+	<input class="header__input" type="text" value="{{ .Address }}" disabled />
 	<div class="header__info">
 		<div class="">Language: {{ .Lang }}</div>
 		<div class="">Lines: {{ .LineCount }}</div>

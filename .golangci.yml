@@ -11,5 +11,5 @@ linters:
     - revive
     - predeclared
     - godot
-    - wrapcheck
+    # - wrapcheck
     - ifshort

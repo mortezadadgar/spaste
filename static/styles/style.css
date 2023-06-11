@@ -137,12 +137,6 @@ header {
 	background-color: var(--color-background);
 }
 
-.header__buttons {
-	display: flex;
-	gap: 20px;
-	justify-content: space-between;
-}
-
 .header__icons img {
 	color: var(--color-foreground);
 	background-size: cover;
@@ -151,7 +145,7 @@ header {
 	height: 24px;
 	filter: invert(var(--icons-filter-invert));
 	cursor: pointer;
-	margin: 0 5px;
+	margin: 0 8px;
 }
 
 .header__info {

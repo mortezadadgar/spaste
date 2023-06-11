@@ -5,9 +5,10 @@ import (
 
 	"github.com/mortezadadgar/spaste/internal/config"
 	"github.com/mortezadadgar/spaste/internal/http"
-	"github.com/mortezadadgar/spaste/internal/snippets"
+	"github.com/mortezadadgar/spaste/internal/snippet"
 	"github.com/mortezadadgar/spaste/internal/store"
 	"github.com/mortezadadgar/spaste/internal/template"
+	"github.com/mortezadadgar/spaste/internal/validator"
 )
 
 func main() {
@@ -26,7 +27,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	snippet := snippets.New(db)
+	validator := validator.New()
+
+	snippet := snippet.New(db, validator)
 
 	server := http.New(config, template, snippet)
 

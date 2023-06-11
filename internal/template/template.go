@@ -18,7 +18,7 @@ type Template struct {
 	templateMap map[string]*template.Template
 }
 
-var Data struct {
+type Data struct {
 	Address         string
 	TextHighlighted template.HTML
 	LineCount       int
@@ -35,21 +35,21 @@ func ToHTML(s string) template.HTML {
 // New returns a new instance of Template
 //
 // caller must have files named in *.page.tmpl format.
-func New(dir string, hasLayout bool) (*Template, error) {
-	r := &Template{
+func New(dir string, hasLayout bool) (Template, error) {
+	r := Template{
 		dir:         dir,
 		hasLayout:   hasLayout,
 		templateMap: make(map[string]*template.Template),
 	}
 
 	if err := r.cacheTemplate(); err != nil {
-		return nil, err
+		return Template{}, err
 	}
 
 	return r, nil
 }
 
-// Rende executes template by its name.
+// Render executes template by its name.
 func (r *Template) Render(w io.Writer, name string, data any) error {
 	err := r.templateMap[name].ExecuteTemplate(w, name, data)
 	if err != nil {

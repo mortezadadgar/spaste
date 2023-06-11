@@ -17,7 +17,7 @@
 	</select>
 {{ end }}
 {{ define "address" }}
-	<input class="header__input" type="text" value="{{ .Address }}" />
+	<input class="header__input" type="text" value="{{ .Address }}" disabled />
 	{{ template "select" . }}
 	<div class="header__icons">
 		<img class="header__save" src="./static/svg/save.svg" />
@@ -31,7 +31,8 @@
 		class="main__input"
 		type="text"
 		spellcheck="false"
-		autofocus
+		autocomplete="off"
 		placeholder="Enter code to paste."
+		autofocus
 	></textarea>
 {{ end }}

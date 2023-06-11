@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 
 	"net/http"
 	"os"
@@ -25,19 +24,19 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/mortezadadgar/spaste/internal/config"
 	"github.com/mortezadadgar/spaste/internal/log"
-	"github.com/mortezadadgar/spaste/internal/snippets"
+	"github.com/mortezadadgar/spaste/internal/snippet"
 	"github.com/mortezadadgar/spaste/internal/template"
 )
 
 type Server struct {
-	cfg      *config.Config
-	template *template.Template
-	snippet  *snippets.Snippet
+	cfg      config.Config
+	template template.Template
+	snippet  snippet.Snippet
 }
 
 // New returns a new instance of server.
-func New(cfg *config.Config, template *template.Template, snippet *snippets.Snippet) *Server {
-	return &Server{
+func New(cfg config.Config, template template.Template, snippet snippet.Snippet) Server {
+	return Server{
 		cfg:      cfg,
 		template: template,
 		snippet:  snippet,
@@ -91,59 +90,40 @@ func (s *Server) renderIndex(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-type envelope struct {
-	Snippet any `json:"snippet"`
-}
-
-func (s *Server) addSnippet(w http.ResponseWriter, r *http.Request) {
-	b, err := io.ReadAll(r.Body)
-	if err != nil {
-		log.Errorln(err)
-		s.serverError(w, true)
-		return
-	}
-
+func (s *Server) createSnippet(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Text      string `json:"text"`
 		Lang      string `json:"lang"`
 		LineCount int    `json:"lineCount"`
 	}
 
-	err = json.Unmarshal(b, &envelope{&input})
+	err := json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
 		log.Errorln(err)
-		s.serverError(w, true)
-		return
-	}
-
-	// input.Text is being checked from js.
-	if len(input.Lang) < 1 || input.LineCount < 1 {
-		log.Errorln("input.Lang or input.LineCount validation error")
 		s.serverError(w, true)
 		return
 	}
 
 	var output struct {
-		Addr string `json:"addr"`
+		Address string `json:"address"`
 	}
 
-	output.Addr, err = s.snippet.MakeAddress(int64(s.cfg.AddressLength))
+	output.Address, err = s.snippet.MakeAddress(s.cfg.AddressLength)
+	if err != nil {
+		log.Errorln(err)
+		s.serverError(w, true)
+		return
+	}
+	output.Address = fmt.Sprintf("%s.%s", output.Address, input.Lang)
+
+	err = s.snippet.Create(input.Text, input.Lang, input.LineCount, output.Address)
 	if err != nil {
 		log.Errorln(err)
 		s.serverError(w, true)
 		return
 	}
 
-	output.Addr = fmt.Sprintf("%s.%s", output.Addr, input.Lang)
-
-	err = s.snippet.Add(input.Text, input.Lang, input.LineCount, output.Addr)
-	if err != nil {
-		log.Errorln(err)
-		s.serverError(w, true)
-		return
-	}
-
-	resp, err := json.Marshal(envelope{output})
+	resp, err := json.Marshal(output)
 	if err != nil {
 		log.Errorln(err)
 		s.serverError(w, true)
@@ -155,54 +135,71 @@ func (s *Server) addSnippet(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Errorln(err)
 		s.serverError(w, true)
-		return
 	}
 }
 
 // we tend to ignore errors from this function to reduce verbosity.
-func (s *Server) serverError(w http.ResponseWriter, isJS bool) {
-	template.Data.Message = "Internal server error :("
-	template.Data.IncludeHome = false
+func (s *Server) serverError(w http.ResponseWriter, isFromJS bool) error {
+	t := template.Data{
+		Message:     "404 Page not found",
+		IncludeHome: true,
+	}
 
 	// I dont like this portion of code myself
 	// but had no other choice than write it
 	// directly to stream and return from here
-	if !isJS {
-		_ = s.template.Render(w, "message.page.tmpl", template.Data)
+	if !isFromJS {
+		err := s.template.Render(w, "message.page.tmpl", t)
+		if err != nil {
+			return fmt.Errorf("failed to render non-js server error: %s", err)
+		}
 		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	buf := new(bytes.Buffer)
-	_ = s.template.Render(buf, "message.page.tmpl", template.Data)
+	err := s.template.Render(buf, "message.page.tmpl", t)
+	if err != nil {
+		return fmt.Errorf("failed to render js server error: %s", err)
+	}
 
 	var errorOutput struct {
-		HTML string `json:"errHTML"`
+		HTML string `json:"errorHTML"`
 	}
 	errorOutput.HTML = buf.String()
 
-	resp, _ := json.Marshal(errorOutput)
+	resp, err := json.Marshal(errorOutput)
+	if err != nil {
+		return fmt.Errorf("failed to encode server error: %s", err)
+	}
 
 	w.WriteHeader(http.StatusInternalServerError)
 	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		return fmt.Errorf("failed to write server error: %s", err)
+	}
+
+	return nil
 }
 
 func (s *Server) renderSnippet(w http.ResponseWriter, r *http.Request) {
-	addr := chi.URLParam(r, "addr")
+	address := chi.URLParam(r, "addr")
 
-	if len(addr) == 0 {
+	if len(address) == 0 {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
-	snippet, err := s.snippet.Get(addr)
+	snippet, err := s.snippet.Get(address)
 	switch {
 	case snippet == nil:
+		// log.Printf("snippet %s not found", address)
 		s.notFoundHandler(w, r)
 		return
 	case err != nil:
 		log.Errorln(err)
+		s.serverError(w, false)
 		return
 	}
 
@@ -234,13 +231,14 @@ func (s *Server) renderSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// convert from string to template.HTML
-	template.Data.TextHighlighted = template.ToHTML(buf.String())
-	template.Data.Address = fmt.Sprintf("%s/%s", r.Host, snippet.Address)
-	template.Data.LineCount = snippet.LineCount
-	template.Data.Lang = snippet.Lang
+	t := &template.Data{
+		TextHighlighted: template.ToHTML(buf.String()),
+		Address:         fmt.Sprintf("%s/%s", r.Host, snippet.Address),
+		LineCount:       snippet.LineCount,
+		Lang:            snippet.Lang,
+	}
 
-	err = s.template.Render(w, "snippet.page.tmpl", template.Data)
+	err = s.template.Render(w, "snippet.page.tmpl", t)
 	if err != nil {
 		log.Errorln(err)
 		s.serverError(w, false)
@@ -248,11 +246,13 @@ func (s *Server) renderSnippet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) notFoundHandler(w http.ResponseWriter, _ *http.Request) {
-	template.Data.Message = "404 Page not found"
-	template.Data.IncludeHome = true
+	t := template.Data{
+		Message:     "404 Page not found",
+		IncludeHome: true,
+	}
 	w.WriteHeader(http.StatusNotFound)
 
-	err := s.template.Render(w, "message.page.tmpl", template.Data)
+	err := s.template.Render(w, "message.page.tmpl", t)
 	if err != nil {
 		log.Errorln(err)
 		s.serverError(w, false)
@@ -270,7 +270,7 @@ func (s *Server) routes() *chi.Mux {
 
 	r.Get("/", s.renderIndex)
 
-	r.Post("/snippets", s.addSnippet)
+	r.Post("/snippet", s.createSnippet)
 
 	r.Get("/{addr:[Aa-zZ.]+}", s.renderSnippet)
 
@@ -282,15 +282,16 @@ func (s *Server) routes() *chi.Mux {
 // Start setup the server and eventually start it.
 func (s *Server) Start() {
 	srv := http.Server{
-		Addr:    fmt.Sprintf(":%s", s.cfg.Address),
-		Handler: s.routes(),
+		Addr:         fmt.Sprintf(":%s", s.cfg.Address),
+		Handler:      s.routes(),
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
 	go func() {
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 		<-sig
-		close(sig)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		err := srv.Shutdown(ctx)
@@ -301,6 +302,7 @@ func (s *Server) Start() {
 		}
 	}()
 
+	// This is a lie!
 	log.Printf("Started server on address %s\n", s.cfg.Address)
 
 	if err := srv.ListenAndServe(); err != nil {

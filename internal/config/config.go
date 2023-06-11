@@ -16,21 +16,21 @@ type Config struct {
 	Production bool   `env:"PRODUCTION"`
 
 	// snippets
-	AddressLength int `env:"ADDRESS_LENGTH,required"`
+	AddressLength int64 `env:"ADDRESS_LENGTH,required"`
 }
 
 // New returns a new instance of Config.
-func New() (*Config, error) {
+func New() (Config, error) {
 	err := godotenv.Load()
 	if err != nil {
-		return nil, fmt.Errorf("failed to load godotenv: %v", err)
+		return Config{}, fmt.Errorf("failed to load godotenv: %v", err)
 	}
 
 	var cfg Config
 	err = env.Parse(&cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse struct config: %v", err)
+		return Config{}, fmt.Errorf("failed to parse struct config: %v", err)
 	}
 
-	return &cfg, nil
+	return cfg, nil
 }

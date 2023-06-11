@@ -15,21 +15,21 @@ import (
 )
 
 type SQLiteStore struct {
-	db *sql.DB
+	DB *sql.DB
 }
 
 // NewSQLiteStore returns a instance of SQLiteStore.
-func NewSQLiteStore(c *config.Config) (*SQLiteStore, error) {
-	store := SQLiteStore{}
-	if err := store.Init(c); err != nil {
+func NewSQLiteStore(c config.Config) (*SQLiteStore, error) {
+	store := &SQLiteStore{}
+	if err := store.init(c); err != nil {
 		return nil, err
 	}
 
-	return &store, nil
+	return store, nil
 }
 
-func (s *SQLiteStore) Init(config *config.Config) error {
-	db, err := sql.Open("sqlite3", config.ConnectionString)
+func (s *SQLiteStore) init(config config.Config) error {
+	DB, err := sql.Open("sqlite3", config.ConnectionString)
 	if err != nil {
 		return fmt.Errorf("falied to open sqlite database %v", err)
 	}
@@ -37,21 +37,22 @@ func (s *SQLiteStore) Init(config *config.Config) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	err = db.PingContext(ctx)
+	err = DB.PingContext(ctx)
 	if err != nil {
 		return fmt.Errorf("falied to ping sqlite database %v", err)
 	}
 
-	s.db = db
+	s.DB = DB
 
 	return nil
 }
 
-func (s *SQLiteStore) Add(snippet *models.Snippet) error {
+// Create inserts snippet to sqlite store.
+func (s *SQLiteStore) Create(snippet *models.Snippet) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := s.db.ExecContext(ctx,
+	_, err := s.DB.ExecContext(ctx,
 		"INSERT INTO snippets(text, lang, line_count, addr, created_at) values(?, ?, ?, ?, ?)",
 		snippet.Text,
 		snippet.Lang,
@@ -68,12 +69,13 @@ func (s *SQLiteStore) Add(snippet *models.Snippet) error {
 	return nil
 }
 
+// Get gets snippet by its address from sqlite store.
 func (s *SQLiteStore) Get(addr string) (*models.Snippet, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	var snippet models.Snippet
-	err := s.db.QueryRowContext(ctx,
+	err := s.DB.QueryRowContext(ctx,
 		"SELECT * FROM snippets WHERE addr = ?", addr).Scan(
 		&snippet.ID,
 		&snippet.Text,
@@ -90,8 +92,4 @@ func (s *SQLiteStore) Get(addr string) (*models.Snippet, error) {
 	}
 
 	return &snippet, nil
-}
-
-func (i *SQLiteStore) getLastID() int {
-	return 0
 }

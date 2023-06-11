@@ -13,7 +13,7 @@ func NewInMemoryStore() *InMemoryStore {
 	return &InMemoryStore{}
 }
 
-func (i *InMemoryStore) Add(snippet *models.Snippet) error {
+func (i *InMemoryStore) Create(snippet *models.Snippet) error {
 	i.models = append(i.models, models.Snippet{
 		ID:        i.getLastID() + 1,
 		Text:      snippet.Text,
