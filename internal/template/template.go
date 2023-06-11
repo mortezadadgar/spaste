@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"net/http"
+	"io"
 	"path/filepath"
 )
 
@@ -22,6 +22,10 @@ var Data struct {
 	Address         string
 	TextHighlighted template.HTML
 	LineCount       int
+	Lang            string
+
+	Message     string
+	IncludeHome bool
 }
 
 func ToHTML(s string) template.HTML {
@@ -46,7 +50,7 @@ func New(dir string, hasLayout bool) (*Template, error) {
 }
 
 // Rende executes template by its name.
-func (r *Template) Render(w http.ResponseWriter, name string, data any) error {
+func (r *Template) Render(w io.Writer, name string, data any) error {
 	err := r.templateMap[name].ExecuteTemplate(w, name, data)
 	if err != nil {
 		return fmt.Errorf("failed to execute template name %s: %v", name, err)

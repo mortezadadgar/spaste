@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/mortezadadgar/spaste/internal/config"
+	"github.com/mortezadadgar/spaste/internal/log"
 	"github.com/mortezadadgar/spaste/internal/models"
 
 	// sqlite3 driver.
@@ -50,8 +51,6 @@ func (s *SQLiteStore) Add(snippet *models.Snippet) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	snippet.LineCount = 0
-
 	_, err := s.db.ExecContext(ctx,
 		"INSERT INTO snippets(text, lang, line_count, addr, created_at) values(?, ?, ?, ?, ?)",
 		snippet.Text,
@@ -64,7 +63,7 @@ func (s *SQLiteStore) Add(snippet *models.Snippet) error {
 		return fmt.Errorf("failed to insert to sqlite table: %v", err)
 	}
 
-	fmt.Printf("Added %+v", snippet)
+	log.Printf("Added %+v\n", snippet)
 
 	return nil
 }

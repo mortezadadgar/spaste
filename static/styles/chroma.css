@@ -1,7 +1,7 @@
 /* onedark theme */
 .chroma {
-	color: #abb2bf;
-	background-color: #282c34;
+	color: var(--color-foreground);
+	background-color: var(--color-background);
 }
 .chroma .lnlinks {
 	outline: none;
@@ -21,7 +21,7 @@
 	border: 0;
 }
 .chroma .hl {
-	background-color: #3d4148;
+	background-color: var(--color-background);
 }
 .chroma .lnt {
 	white-space: pre;
@@ -29,7 +29,7 @@
 	user-select: none;
 	margin-right: 0.4em;
 	padding: 0 0.4em 0 0.4em;
-	color: #55595f;
+	color: var(--color-gray);
 }
 .chroma .ln {
 	white-space: pre;
@@ -37,184 +37,184 @@
 	user-select: none;
 	margin-right: 0.4em;
 	padding: 0 0.4em 0 0.4em;
-	color: #55595f;
+	color: var(--color-gray);
 }
 .chroma .line {
 	display: flex;
 }
 .chroma .k {
-	color: #c678dd;
+	color: var(--color-magenta);
 }
 .chroma .kc {
-	color: #e5c07b;
+	color: var(--color-yellow2);
 }
 .chroma .kd {
-	color: #c678dd;
+	color: var(--color-magenta);
 }
 .chroma .kn {
-	color: #c678dd;
+	color: var(--color-magenta);
 }
 .chroma .kp {
-	color: #c678dd;
+	color: var(--color-magenta);
 }
 .chroma .kr {
-	color: #c678dd;
+	color: var(--color-magenta);
 }
 .chroma .kt {
-	color: #e5c07b;
+	color: var(--color-yellow2);
 }
 .chroma .n {
-	color: #e06c75;
+	color: var(--color-red);
 }
 .chroma .na {
-	color: #e06c75;
+	color: var(--color-red);
 }
 .chroma .nb {
-	color: #e5c07b;
+	color: var(--color-yellow2);
 }
 .chroma .bp {
-	color: #e06c75;
+	color: var(--color-red);
 }
 .chroma .nc {
-	color: #e5c07b;
+	color: var(--color-yellow2);
 }
 .chroma .no {
-	color: #e06c75;
+	color: var(--color-red);
 }
 .chroma .nd {
-	color: #61afef;
+	color: var(--color-blue);
 }
 .chroma .ni {
-	color: #e06c75;
+	color: var(--color-red);
 }
 .chroma .ne {
-	color: #e06c75;
+	color: var(--color-red);
 }
 .chroma .nf {
-	color: #61afef;
+	color: var(--color-blue);
 	font-weight: bold;
 }
 .chroma .fm {
-	color: #56b6c2;
+	color: var(--color-cyan);
 	font-weight: bold;
 }
 .chroma .nl {
-	color: #e06c75;
+	color: var(--color-red);
 }
 .chroma .nn {
-	color: #e06c75;
+	color: var(--color-red);
 }
 .chroma .nx {
-	color: #e06c75;
+	color: var(--color-red);
 }
 .chroma .py {
-	color: #e06c75;
+	color: var(--color-red);
 }
 .chroma .nt {
-	color: #e06c75;
+	color: var(--color-red);
 }
 .chroma .nv {
-	color: #e06c75;
+	color: var(--color-red);
 }
 .chroma .vc {
-	color: #e06c75;
+	color: var(--color-red);
 }
 .chroma .vg {
-	color: #e06c75;
+	color: var(--color-red);
 }
 .chroma .vi {
-	color: #e06c75;
+	color: var(--color-red);
 }
 .chroma .vm {
-	color: #e06c75;
+	color: var(--color-red);
 }
 .chroma .s {
-	color: #98c379;
+	color: var(--color-green);
 }
 .chroma .sa {
-	color: #98c379;
+	color: var(--color-green);
 }
 .chroma .sb {
-	color: #98c379;
+	color: var(--color-green);
 }
 .chroma .sc {
-	color: #98c379;
+	color: var(--color-green);
 }
 .chroma .dl {
-	color: #98c379;
+	color: var(--color-green);
 }
 .chroma .sd {
-	color: #98c379;
+	color: var(--color-green);
 }
 .chroma .s2 {
-	color: #98c379;
+	color: var(--color-green);
 }
 .chroma .se {
-	color: #98c379;
+	color: var(--color-green);
 }
 .chroma .sh {
-	color: #98c379;
+	color: var(--color-green);
 }
 .chroma .si {
-	color: #98c379;
+	color: var(--color-green);
 }
 .chroma .sx {
-	color: #98c379;
+	color: var(--color-green);
 }
 .chroma .sr {
-	color: #98c379;
+	color: var(--color-green);
 }
 .chroma .s1 {
-	color: #98c379;
+	color: var(--color-green);
 }
 .chroma .ss {
-	color: #98c379;
+	color: var(--color-green);
 }
 .chroma .m {
-	color: #d19a66;
+	color: var(--color-yellow);
 }
 .chroma .mb {
-	color: #d19a66;
+	color: var(--color-yellow);
 }
 .chroma .mf {
-	color: #d19a66;
+	color: var(--color-yellow);
 }
 .chroma .mh {
-	color: #d19a66;
+	color: var(--color-yellow);
 }
 .chroma .mi {
-	color: #d19a66;
+	color: var(--color-yellow);
 }
 .chroma .il {
-	color: #d19a66;
+	color: var(--color-yellow);
 }
 .chroma .mo {
-	color: #d19a66;
+	color: var(--color-yellow);
 }
 .chroma .o {
-	color: #56b6c2;
+	color: var(--color-cyan);
 }
 .chroma .ow {
-	color: #56b6c2;
+	color: var(--color-cyan);
 }
 .chroma .c {
-	color: #7f848e;
+	color: var(--color-gray2);
 }
 .chroma .ch {
-	color: #7f848e;
+	color: var(--color-gray2);
 }
 .chroma .cm {
-	color: #7f848e;
+	color: var(--color-gray2);
 }
 .chroma .c1 {
-	color: #7f848e;
+	color: var(--color-gray2);
 }
 .chroma .cs {
-	color: #7f848e;
+	color: var(--color-gray2);
 }
 .chroma .cp {
-	color: #7f848e;
+	color: var(--color-gray2);
 }
 .chroma .cpf {
-	color: #7f848e;
+	color: var(--color-gray2);
 }

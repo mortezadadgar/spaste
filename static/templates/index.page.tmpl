@@ -1,6 +1,6 @@
 {{ template "base" . }}
 {{ define "title" }}
-	Simple Paste
+	Simple Paste - Home
 {{ end }}
 {{ define "select" }}
 	<select class="header__select">
@@ -16,6 +16,13 @@
 		<option value="javascript">Javascript</option>
 	</select>
 {{ end }}
+{{ define "address" }}
+	<input class="header__input" type="text" value="{{ .Address }}" />
+	{{ template "select" . }}
+	<div class="header__icons">
+		<img class="header__save" src="./static/svg/save.svg" />
+	</div>
+{{ end }}
 {{ define "main" }}
 	<div class="main__numbers">
 		<div class="main__number">1</div>
@@ -25,5 +32,6 @@
 		type="text"
 		spellcheck="false"
 		autofocus
+		placeholder="Enter code to paste."
 	></textarea>
 {{ end }}

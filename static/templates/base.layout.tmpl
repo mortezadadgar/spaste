@@ -1,6 +1,5 @@
 {{ define "base" }}
 	<!-- TODO:
-	- hover on svg icons and input
 	- change save button with animation
 	- copy to clipboard
 -->
@@ -16,23 +15,13 @@
 		</head>
 		<body>
 			<header>
-				<div class="header__brand">Simple Paste</div>
+				<a class="header__brand" href="/">Simple Paste</a>
 				<div class="header__address">
-					<input class="header__input" type="text" value="{{ .Address }}" />
-					{{ template "select" . }}
-					<div class="header__save">
-						<img class="header__icons" src="./static/svg/save.svg" />
-					</div>
+					{{ template "address" . }}
 				</div>
-				<div class="header__buttons">
-					<!-- TODO: copy to clipboard -->
-					<div class="header__share">
-						<img class="header__icons" src="./static/svg/share.svg" />
-					</div>
-					<!-- TODO: change to moon on click -->
-					<div class="header__theme">
-						<img class="header__icons" src="./static/svg/sun.svg" />
-					</div>
+				<div class="header__icons">
+					<img class="header__share" src="./static/svg/share.svg" />
+					<img class="header__theme" src="./static/svg/sun.svg" />
 				</div>
 			</header>
 			<main>

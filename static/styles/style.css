@@ -4,22 +4,72 @@
 	padding: 0;
 }
 
+/* 
+ * foregound:         #abb2bf
+ * red:               #e06c75
+ * green:             #98c379
+ * yellow:            #d19a66
+ * blue:              #61afef
+ * magenta:           #c678dd
+ * cyan               #56b6c2
+ * yellow2:           #e5c07b 
+ * gray:              #55595f
+ * gray2              #7f848e
+ */
 :root {
-	--color-gray: #f7f7f7;
-	--color-dark-gray: #dedede;
-	--color-orange: #f2901d;
-	--color-dark-orange: #e8830d;
-	--color-blue: #1e90ff;
-	--color-dark-blue: #0077ea;
+	--color-input-focus: #1e90ff;
 	--color-header: #1d2026;
-	--color-background: #282c34;
 	--color-line-number: #595f6c;
+	--icons-filter-invert: 1;
+
+	--color-foreground: #c0c0c0;
+	--color-background: #282c34;
+	--color-red: #e06c75;
+	--color-green: #98c379;
+	--color-yellow: #d19a66;
+	--color-blue: #61afef;
+	--color-magenta: #c678dd;
+	--color-cyan: #56b6c2;
+	--color-yellow2: #e5c07b;
+	--color-gray: #55595f;
+	--color-gray2: #7f848e;
+}
+
+html.light-theme {
+	--color-header: #d3d3d3;
+	--icons-filter-invert: 0;
+
+	--color-foreground: #494b53;
+	--color-background: #ffffff;
+	--color-red: #e45649;
+	--color-green: #50a14f;
+	--color-yellow: #986801;
+	--color-blue: #4078f2;
+	--color-magenta: #a626a4;
+	--color-cyan: #0184bc;
+	--color-yellow2: #c18401;
+	--color-gray: #55595f;
+	--color-gray2: #7f848e;
 }
 
 body {
 	background-color: var(--color-background);
 	font-family: sans;
 	font-size: 13px;
+}
+
+html {
+	scrollbar-color: var(--color-line-number) var(--color-background);
+}
+
+::-webkit-scrollbar {
+	width: 7px;
+	height: 7px;
+	background: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+	background: var(--color-line-number);
 }
 
 a {
@@ -44,13 +94,13 @@ header {
 	flex-direction: row;
 	justify-content: space-between;
 	padding: 10px 20px;
-	font-style: italic;
 	background-color: var(--color-header);
 }
 
 .header__brand {
-	color: white;
+	color: var(--color-foreground);
 	font-size: 1.4em;
+	font-style: italic;
 }
 
 .header__address {
@@ -63,24 +113,28 @@ header {
 /* TODO: add margin-right and margin-bottom two elements after  */
 .header__input {
 	background-color: var(--color-header);
-	color: white;
-	border-bottom: 1px solid white;
+	color: var(--color-foreground);
+	border-bottom: 1px solid var(--color-foreground);
 	margin-right: 10px;
-	caret-color: white;
+	caret-color: var(--color-foreground);
 	width: 300px;
 	margin-bottom: 3px; /* inline with save icon */
 }
 
 .header__input:focus {
-	border-bottom: 1px solid var(--color-blue);
+	border-bottom: 1px solid var(--color-input-focus);
 }
 
 .header__select {
 	background-color: var(--color-header);
-	color: white;
+	color: var(--color-foreground);
 	margin-right: 10px;
 	border: none;
 	outline: none;
+}
+
+.header__select option {
+	background-color: var(--color-background);
 }
 
 .header__buttons {
@@ -89,13 +143,25 @@ header {
 	justify-content: space-between;
 }
 
-.header__icons {
+.header__icons img {
+	color: var(--color-foreground);
 	background-size: cover;
 	background-repeat: no-repeat;
 	width: 24px;
 	height: 24px;
-	filter: invert(1);
+	filter: invert(var(--icons-filter-invert));
 	cursor: pointer;
+	margin: 0 5px;
+}
+
+.header__info {
+	color: var(--color-foreground);
+	display: flex;
+	gap: 5px;
+	align-items: center;
+	background-color: var(--color-background);
+	padding: 5px;
+	border-radius: 5px;
 }
 
 main {
@@ -110,11 +176,12 @@ main {
 .main__input {
 	width: 100%;
 	background-color: var(--color-background);
-	caret-color: white;
-	color: white;
+	caret-color: var(--color-foreground);
+	color: var(--color-foreground);
 	padding: 4px;
 	line-height: 20px;
 	resize: none;
+	white-space: pre;
 }
 
 .main__numbers {
@@ -122,7 +189,7 @@ main {
 	flex-direction: column;
 	align-items: center;
 	width: 10px;
-	color: white;
+	color: var(--color-foreground);
 	padding: 4px 15px;
 	overflow: hidden;
 	line-height: 20px;
@@ -134,9 +201,9 @@ main {
 }
 
 .message {
-	border: 2px white solid;
+	border: 2px var(--color-foreground) solid;
 	padding: 20px 40px;
-	color: white;
+	color: var(--color-foreground);
 	position: absolute;
 	top: 50%;
 	left: 50%;
@@ -147,12 +214,12 @@ main {
 
 .message__home {
 	cursor: pointer;
-	background-color: white;
+	background-color: var(--color-foreground);
 	color: var(--color-background);
 }
 
 .message__home:hover {
 	transition: color 200ms ease-in-out;
 	background-color: var(--color-background);
-	color: white;
+	color: var(--color-foreground);
 }

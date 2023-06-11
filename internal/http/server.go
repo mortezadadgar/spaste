@@ -1,11 +1,7 @@
 package http
 
 // TODO:
-//      - logger: try to add status code. ref: https://ndersson.me/post/capturing_status_code_in_net_http/
 //      - addSnippet: unlikely: check on repetitive addresses
-//      - addSnippet: append filetype when formats when syntax highlighting in available
-//		- addSnippet: show a popup on empty text
-//      - strings builder?
 
 import (
 	"bytes"
@@ -13,7 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+
 	"net/http"
 	"os"
 	"os/signal"
@@ -28,6 +24,7 @@ import (
 	"github.com/alecthomas/chroma/styles"
 	"github.com/go-chi/chi"
 	"github.com/mortezadadgar/spaste/internal/config"
+	"github.com/mortezadadgar/spaste/internal/log"
 	"github.com/mortezadadgar/spaste/internal/snippets"
 	"github.com/mortezadadgar/spaste/internal/template"
 )
@@ -47,7 +44,7 @@ func New(cfg *config.Config, template *template.Template, snippet *snippets.Snip
 	}
 }
 
-func disallowRootFS(next http.Handler) http.Handler {
+func (s *Server) disallowRootFS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/") {
 			http.NotFound(w, r)
@@ -78,10 +75,6 @@ func (s *Server) recoverer(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				err := s.template.Render(w, "error.page.tmpl", nil)
-				if err != nil {
-					log.Fatal(err)
-				}
 				log.Printf("%s\nSTACK: %s", err, debug.Stack())
 			}
 		}()
@@ -90,17 +83,11 @@ func (s *Server) recoverer(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) ServerError(w http.ResponseWriter, _ *http.Request) {
-	err := s.template.Render(w, "error.page.tmpl", nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func (s *Server) indexHandler(w http.ResponseWriter, _ *http.Request) {
+func (s *Server) renderIndex(w http.ResponseWriter, _ *http.Request) {
 	err := s.template.Render(w, "index.page.tmpl", nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Errorln(err)
+		s.serverError(w, false)
 	}
 }
 
@@ -111,7 +98,8 @@ type envelope struct {
 func (s *Server) addSnippet(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Println(err)
+		log.Errorln(err)
+		s.serverError(w, true)
 		return
 	}
 
@@ -123,11 +111,17 @@ func (s *Server) addSnippet(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(b, &envelope{&input})
 	if err != nil {
-		log.Println(err)
+		log.Errorln(err)
+		s.serverError(w, true)
 		return
 	}
 
-	// TODO: validation
+	// input.Text is being checked from js.
+	if len(input.Lang) < 1 || input.LineCount < 1 {
+		log.Errorln("input.Lang or input.LineCount validation error")
+		s.serverError(w, true)
+		return
+	}
 
 	var output struct {
 		Addr string `json:"addr"`
@@ -135,34 +129,66 @@ func (s *Server) addSnippet(w http.ResponseWriter, r *http.Request) {
 
 	output.Addr, err = s.snippet.MakeAddress(int64(s.cfg.AddressLength))
 	if err != nil {
-		log.Println(err)
+		log.Errorln(err)
+		s.serverError(w, true)
 		return
 	}
 
 	output.Addr = fmt.Sprintf("%s.%s", output.Addr, input.Lang)
 
+	err = s.snippet.Add(input.Text, input.Lang, input.LineCount, output.Addr)
+	if err != nil {
+		log.Errorln(err)
+		s.serverError(w, true)
+		return
+	}
+
 	resp, err := json.Marshal(envelope{output})
 	if err != nil {
-		log.Println(err)
+		log.Errorln(err)
+		s.serverError(w, true)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(resp)
 	if err != nil {
-		log.Println(err)
+		log.Errorln(err)
+		s.serverError(w, true)
+		return
+	}
+}
+
+// we tend to ignore errors from this function to reduce verbosity.
+func (s *Server) serverError(w http.ResponseWriter, isJS bool) {
+	template.Data.Message = "Internal server error :("
+	template.Data.IncludeHome = false
+
+	// I dont like this portion of code myself
+	// but had no other choice than write it
+	// directly to stream and return from here
+	if !isJS {
+		_ = s.template.Render(w, "message.page.tmpl", template.Data)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	err = s.snippet.Add(input.Text, input.Lang, input.LineCount, output.Addr)
-	if err != nil {
-		log.Fatal(err)
-	}
+	buf := new(bytes.Buffer)
+	_ = s.template.Render(buf, "message.page.tmpl", template.Data)
 
-	log.Printf("%s, Text: %s, Lang: %s\n", output.Addr, input.Text, input.Lang)
+	var errorOutput struct {
+		HTML string `json:"errHTML"`
+	}
+	errorOutput.HTML = buf.String()
+
+	resp, _ := json.Marshal(errorOutput)
+
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(resp)
 }
 
-func (s *Server) renderUserSnippet(w http.ResponseWriter, r *http.Request) {
+func (s *Server) renderSnippet(w http.ResponseWriter, r *http.Request) {
 	addr := chi.URLParam(r, "addr")
 
 	if len(addr) == 0 {
@@ -176,7 +202,8 @@ func (s *Server) renderUserSnippet(w http.ResponseWriter, r *http.Request) {
 		s.notFoundHandler(w, r)
 		return
 	case err != nil:
-		log.Fatal(err)
+		log.Errorln(err)
+		return
 	}
 
 	lexer := lexers.Get(snippet.Lang)
@@ -189,7 +216,9 @@ func (s *Server) renderUserSnippet(w http.ResponseWriter, r *http.Request) {
 
 	iterator, err := lexer.Tokenise(nil, string(snippet.Text))
 	if err != nil {
-		log.Fatal(err)
+		log.Errorln(err)
+		s.serverError(w, false)
+		return
 	}
 
 	style := styles.Get("doom-one")
@@ -200,24 +229,33 @@ func (s *Server) renderUserSnippet(w http.ResponseWriter, r *http.Request) {
 	buf := new(bytes.Buffer)
 	err = formatter.Format(buf, style, iterator)
 	if err != nil {
-		log.Fatal(err)
+		log.Errorln(err)
+		s.serverError(w, false)
+		return
 	}
 
 	// convert from string to template.HTML
 	template.Data.TextHighlighted = template.ToHTML(buf.String())
 	template.Data.Address = fmt.Sprintf("%s/%s", r.Host, snippet.Address)
 	template.Data.LineCount = snippet.LineCount
+	template.Data.Lang = snippet.Lang
 
 	err = s.template.Render(w, "snippet.page.tmpl", template.Data)
 	if err != nil {
-		log.Fatal(err)
+		log.Errorln(err)
+		s.serverError(w, false)
 	}
 }
 
 func (s *Server) notFoundHandler(w http.ResponseWriter, _ *http.Request) {
-	err := s.template.Render(w, "404.page.tmpl", nil)
+	template.Data.Message = "404 Page not found"
+	template.Data.IncludeHome = true
+	w.WriteHeader(http.StatusNotFound)
+
+	err := s.template.Render(w, "message.page.tmpl", template.Data)
 	if err != nil {
-		log.Fatal(err)
+		log.Errorln(err)
+		s.serverError(w, false)
 	}
 }
 
@@ -227,16 +265,14 @@ func (s *Server) routes() *chi.Mux {
 	r.Use(s.recoverer)
 
 	fs := http.FileServer(http.Dir("./static"))
-	r.With(disallowRootFS).
+	r.With(s.disallowRootFS).
 		Handle("/static/*", http.StripPrefix("/static", fs))
 
-	r.Get("/", s.indexHandler)
+	r.Get("/", s.renderIndex)
 
-	r.Route("/snippets", func(r chi.Router) {
-		r.HandleFunc("/", s.addSnippet)
-	})
+	r.Post("/snippets", s.addSnippet)
 
-	r.Get("/{addr:[Aa-zZ.]+}", s.renderUserSnippet)
+	r.Get("/{addr:[Aa-zZ.]+}", s.renderSnippet)
 
 	r.NotFound(s.notFoundHandler)
 
@@ -259,7 +295,7 @@ func (s *Server) Start() {
 		defer cancel()
 		err := srv.Shutdown(ctx)
 		if err != nil {
-			log.Println("unable to shutdown the server, exiting!")
+			log.Errorln("unable to shutdown the server, exiting!")
 			cancel()
 			os.Exit(1)
 		}

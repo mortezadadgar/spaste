@@ -8,8 +8,10 @@
 	</head>
 	<body>
 		<div class="message">
-			<p class="message__error">404 Page not found</p>
-			<a class="message__home" href="/">Home</a>
+			<p class="message__error">{{ .Message }}</p>
+			{{ if .IncludeHome }}
+				<a class="message__home" href="/">Home</a>
+			{{ end }}
 		</div>
 	</body>
 </html>
