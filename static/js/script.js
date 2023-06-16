@@ -3,7 +3,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 	setupColors();
 	setupPage();
-	if (document.querySelector(".main__input")) {
+	if (document.querySelector(".textarea")) {
 		setupEditPage();
 	}
 });
@@ -11,16 +11,16 @@ document.addEventListener("DOMContentLoaded", () => {
 window.addEventListener("keydown", (event) => {
 	if (event.key == "s" && event.ctrlKey) {
 		event.preventDefault();
-		document.querySelector("header__save").click();
+		document.querySelector(".save").click();
 	}
 });
 
 function setupColors() {
 	const storage = window.localStorage;
-	const themeButton = document.querySelector(".header__theme");
+	const themeButton = document.querySelector(".theme");
 
 	if (storage.getItem("light-theme") == "true") {
-		document.querySelector("html").classList.toggle("light-theme");
+		document.querySelector("body").classList.toggle("light-theme");
 		themeButton.src = "./static/svg/moon.svg";
 	}
 
@@ -39,75 +39,63 @@ function setupColors() {
 			storage.setItem("light-theme", true);
 		}
 
-		document.querySelector("html").classList.toggle("light-theme");
+		document.querySelector("body").classList.toggle("light-theme");
 	});
 }
 
 function setupPage() {
-	const snippetAddr = document.querySelector(".header__input");
+	const pasteAddress = document.querySelector(".address");
 
-	document.querySelector(".header__share").addEventListener("click", () => {
-		if (snippetAddr.value.length == 0) {
+	document.querySelector(".share").addEventListener("click", () => {
+		if (pasteAddress.value.length == 0) {
 			alert("Please save your code first.");
 			return;
 		}
 
-		navigator.clipboard.writeText(snippetAddr.value);
+		navigator.clipboard.writeText(pasteAddress.value);
 	});
 }
 
 function setupEditPage() {
-	const snippetText = document.querySelector(".main__input");
-	const snippetSelect = document.querySelector(".header__select");
+	const textArea = document.querySelector(".textarea");
+	const langSelect = document.querySelector(".select");
 	let lineCount = 0;
 
-	document
-		.querySelector(".header__save")
-		.addEventListener("click", async () => {
-			if (snippetText.value.length == 0) {
-				alert("Please paste your code.");
-				return;
-			}
+	document.querySelector(".save").addEventListener("click", async () => {
+		if (textArea.value.length == 0) {
+			alert("Please paste your code.");
+			return;
+		}
 
-			const response = await fetch("/snippet", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					text: snippetText.value,
-					lang: snippetSelect.value,
-					lineCount: lineCount,
-				}),
-			});
-
-			const data = await response.json();
-
-			if (response.status == 500) {
-				const parser = new DOMParser();
-				const errDocument = parser.parseFromString(data.errHTML, "text/html");
-				document.replaceChild(
-					errDocument.documentElement,
-					document.documentElement
-				);
-				return;
-			}
-
-			if (data.address == undefined) {
-				throw "url adresss should not be undefined";
-			}
-
-			// NOTE: we can use window.history.pushState to avoid refreshing page
-			// but it won't update the go template
-			window.location.replace(data.address);
+		const response = await fetch("/paste", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				text: textArea.value,
+				lang: langSelect.value,
+				lineCount: lineCount,
+			}),
 		});
 
-	const lineNumbers = document.querySelector(".main__numbers");
-	const lineNumber = document.querySelector(".main__number");
+		const data = await response.json();
 
-	snippetText.addEventListener("input", () => {
+		if (data.address == undefined) {
+			throw "can not proceed to empty url address";
+		}
+
+		// NOTE: we can use window.history.pushState to avoid refreshing page
+		// but it won't update the go template
+		window.location.replace(data.address);
+	});
+
+	const lineNumbers = document.querySelector(".numbers");
+	const lineNumber = document.querySelector(".number");
+
+	textArea.addEventListener("input", () => {
 		lineNumbers.innerHTML = "";
-		var textLines = snippetText.value.split("\n");
+		var textLines = textArea.value.split("\n");
 		for (let i = 0; i < textLines.length; i++) {
 			const numberElement = lineNumber.cloneNode(true);
 			numberElement.innerText = i + 1;
@@ -116,7 +104,7 @@ function setupEditPage() {
 		lineCount = textLines.length;
 	});
 
-	snippetText.addEventListener("scroll", () => {
-		lineNumbers.scrollTo(0, snippetText.scrollTop);
+	textArea.addEventListener("scroll", () => {
+		lineNumbers.scrollTo(0, textArea.scrollTop);
 	});
 }

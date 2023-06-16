@@ -9,7 +9,7 @@ $ docker run -p 8080:8080 -t spaste
 ```
 
 ## TODO
-- [ ] Password protected snippet
+- [ ] Password protected paste
 - [ ] Show a dialog upon copying to clipboard
-- [ ] Unit testing
+- [X] Unit testing
 - [ ] Allow custom paste address

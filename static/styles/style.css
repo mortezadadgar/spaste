@@ -4,25 +4,14 @@
 	padding: 0;
 }
 
-/* 
- * foregound:         #abb2bf
- * red:               #e06c75
- * green:             #98c379
- * yellow:            #d19a66
- * blue:              #61afef
- * magenta:           #c678dd
- * cyan               #56b6c2
- * yellow2:           #e5c07b 
- * gray:              #55595f
- * gray2              #7f848e
- */
 :root {
 	--color-input-focus: #1e90ff;
 	--color-header: #1d2026;
 	--color-line-number: #595f6c;
 	--icons-filter-invert: 1;
 
-	--color-foreground: #c0c0c0;
+	--color-foreground-code: #c0c0c0;
+	--color-foreground: #ffffff;
 	--color-background: #282c34;
 	--color-red: #e06c75;
 	--color-green: #98c379;
@@ -35,11 +24,12 @@
 	--color-gray2: #7f848e;
 }
 
-html.light-theme {
+body.light-theme {
 	--color-header: #d3d3d3;
 	--icons-filter-invert: 0;
 
-	--color-foreground: #494b53;
+	--color-foreground-code: #494b53;
+	--color-foreground: #000000;
 	--color-background: #ffffff;
 	--color-red: #e45649;
 	--color-green: #50a14f;
@@ -97,35 +87,29 @@ header {
 	background-color: var(--color-header);
 }
 
-.header__brand {
+header h1 {
 	color: var(--color-foreground);
 	font-size: 1.4em;
 	font-style: italic;
 }
 
-.header__address {
+header .left-group {
 	display: flex;
 	flex-direction: row;
 	margin-right: auto;
 	margin-left: 25px;
 }
 
-/* TODO: add margin-right and margin-bottom two elements after  */
-.header__input {
+header .address {
 	background-color: var(--color-header);
 	color: var(--color-foreground);
 	border-bottom: 1px solid var(--color-foreground);
 	margin-right: 10px;
 	caret-color: var(--color-foreground);
 	width: 300px;
-	margin-bottom: 3px; /* inline with save icon */
 }
 
-.header__input:focus {
-	border-bottom: 1px solid var(--color-input-focus);
-}
-
-.header__select {
+header .select {
 	background-color: var(--color-header);
 	color: var(--color-foreground);
 	margin-right: 10px;
@@ -133,11 +117,21 @@ header {
 	outline: none;
 }
 
-.header__select option {
+header .select option {
 	background-color: var(--color-background);
 }
 
-.header__icons img {
+header .info {
+	color: var(--color-foreground);
+	display: flex;
+	gap: 5px;
+	align-items: center;
+	background-color: var(--color-background);
+	padding: 5px;
+	border-radius: 5px;
+}
+
+header .icons {
 	color: var(--color-foreground);
 	background-size: cover;
 	background-repeat: no-repeat;
@@ -148,26 +142,11 @@ header {
 	margin: 0 8px;
 }
 
-.header__info {
-	color: var(--color-foreground);
-	display: flex;
-	gap: 5px;
-	align-items: center;
-	background-color: var(--color-background);
-	padding: 5px;
-	border-radius: 5px;
-}
-
 main {
 	display: flex;
 }
 
-.main__text {
-	padding: 4px;
-	line-height: 20px;
-}
-
-.main__input {
+main .textarea {
 	width: 100%;
 	background-color: var(--color-background);
 	caret-color: var(--color-foreground);
@@ -178,7 +157,7 @@ main {
 	white-space: pre;
 }
 
-.main__numbers {
+main .numbers {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -189,12 +168,12 @@ main {
 	line-height: 20px;
 }
 
-.main__number {
+main .number {
 	text-align: center;
 	color: var(--color-line-number);
 }
 
-.message {
+main .message {
 	border: 2px var(--color-foreground) solid;
 	padding: 20px 40px;
 	color: var(--color-foreground);
@@ -206,14 +185,13 @@ main {
 	line-height: 32px;
 }
 
-.message__home {
+main .message .home {
 	cursor: pointer;
 	background-color: var(--color-foreground);
 	color: var(--color-background);
 }
 
-.message__home:hover {
-	transition: color 200ms ease-in-out;
+main .message .home:hover {
 	background-color: var(--color-background);
 	color: var(--color-foreground);
 }

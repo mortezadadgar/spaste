@@ -10,13 +10,12 @@ import (
 type Config struct {
 	Address string `env:"ADDRESS,required"`
 
-	ConnectionString string `env:"CONNECTION_STRING,required"`
+	ConnectionString string `env:"CONNECTION_STRING,notEmpty"`
 
-	StaticBase string `env:"STATIC_BASE,required"`
+	StaticBase string `env:"STATIC_BASE,notEmpty"`
 	Production bool   `env:"PRODUCTION"`
 
-	// snippets
-	AddressLength int64 `env:"ADDRESS_LENGTH,required"`
+	AddressLength int64 `env:"ADDRESS_LENGTH,notEmpty"`
 }
 
 // New returns a new instance of Config.

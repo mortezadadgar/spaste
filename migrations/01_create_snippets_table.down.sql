@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS snippets;
+DROP TABLE IF EXISTS pastes;

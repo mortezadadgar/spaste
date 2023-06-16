@@ -1,6 +1,6 @@
 /* onedark theme */
 .chroma {
-	color: var(--color-foreground);
+	color: var(--color-foreground-code);
 	background-color: var(--color-background);
 }
 .chroma .lnlinks {

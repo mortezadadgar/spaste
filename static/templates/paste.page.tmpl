@@ -4,17 +4,17 @@
 	{{ .Address }}
 {{ end }}
 {{ define "address" }}
-	<input class="header__input" type="text" value="{{ .Address }}" disabled />
-	<div class="header__info">
+	<input class="address" type="text" value="{{ .Address }}" disabled />
+	<div class="info">
 		<div class="">Language: {{ .Lang }}</div>
 		<div class="">Lines: {{ .LineCount }}</div>
 	</div>
 {{ end }}
 {{ define "main" }}
-	<div class="main__numbers">
+	<div class="numbers">
 		{{ range $index, $element := makeSlice .LineCount }}
-			<div class="main__number">{{ inc $index }}</div>
+			<div class="number">{{ inc $index }}</div>
 		{{ end }}
 	</div>
-	<div class="main__text">{{ .TextHighlighted }}</div>
+	<div class="text">{{ .TextHighlighted }}</div>
 {{ end }}

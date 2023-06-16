@@ -7,8 +7,7 @@ import (
 	"time"
 
 	"github.com/mortezadadgar/spaste/internal/config"
-	"github.com/mortezadadgar/spaste/internal/log"
-	"github.com/mortezadadgar/spaste/internal/models"
+	"github.com/mortezadadgar/spaste/internal/modules"
 
 	// sqlite3 driver.
 	_ "github.com/mattn/go-sqlite3"
@@ -47,42 +46,40 @@ func (s *SQLiteStore) init(config config.Config) error {
 	return nil
 }
 
-// Create inserts snippet to sqlite store.
-func (s *SQLiteStore) Create(snippet *models.Snippet) error {
+// Create inserts paste to sqlite store.
+func (s *SQLiteStore) Create(p *modules.Paste) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	_, err := s.DB.ExecContext(ctx,
-		"INSERT INTO snippets(text, lang, line_count, addr, created_at) values(?, ?, ?, ?, ?)",
-		snippet.Text,
-		snippet.Lang,
-		snippet.LineCount,
-		snippet.Address,
-		snippet.TimeStamp,
+		"INSERT INTO pastes(text, lang, line_count, addr, created_at) values(?, ?, ?, ?, ?)",
+		p.Text,
+		p.Lang,
+		p.LineCount,
+		p.Address,
+		p.TimeStamp,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to insert to sqlite table: %v", err)
 	}
 
-	log.Printf("Added %+v\n", snippet)
-
 	return nil
 }
 
-// Get gets snippet by its address from sqlite store.
-func (s *SQLiteStore) Get(addr string) (*models.Snippet, error) {
+// Get gets paste by its address from sqlite store.
+func (s *SQLiteStore) Get(addr string) (*modules.Paste, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	var snippet models.Snippet
+	var p modules.Paste
 	err := s.DB.QueryRowContext(ctx,
-		"SELECT * FROM snippets WHERE addr = ?", addr).Scan(
-		&snippet.ID,
-		&snippet.Text,
-		&snippet.Lang,
-		&snippet.LineCount,
-		&snippet.Address,
-		&snippet.TimeStamp,
+		"SELECT * FROM pastes WHERE addr = ?", addr).Scan(
+		&p.ID,
+		&p.Text,
+		&p.Lang,
+		&p.LineCount,
+		&p.Address,
+		&p.TimeStamp,
 	)
 	switch {
 	case err == sql.ErrNoRows:
@@ -91,5 +88,5 @@ func (s *SQLiteStore) Get(addr string) (*models.Snippet, error) {
 		return nil, fmt.Errorf("failed to select from sqlite table: %v", err)
 	}
 
-	return &snippet, nil
+	return &p, nil
 }

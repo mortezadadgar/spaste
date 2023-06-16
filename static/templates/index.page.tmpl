@@ -3,7 +3,7 @@
 	Simple Paste - Home
 {{ end }}
 {{ define "select" }}
-	<select class="header__select">
+	<select class="select">
 		<option value="text">Text only</option>
 		<option value="bash">Bash</option>
 		<option value="go">Golang</option>
@@ -17,18 +17,16 @@
 	</select>
 {{ end }}
 {{ define "address" }}
-	<input class="header__input" type="text" value="{{ .Address }}" disabled />
+	<input class="address" type="text" value="" disabled />
 	{{ template "select" . }}
-	<div class="header__icons">
-		<img class="header__save" src="./static/svg/save.svg" />
-	</div>
+	<img class="icons save" src="./static/svg/save.svg" />
 {{ end }}
 {{ define "main" }}
-	<div class="main__numbers">
-		<div class="main__number">1</div>
+	<div class="numbers">
+		<div class="number">1</div>
 	</div>
 	<textarea
-		class="main__input"
+		class="textarea"
 		type="text"
 		spellcheck="false"
 		autocomplete="off"

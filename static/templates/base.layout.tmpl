@@ -1,8 +1,4 @@
 {{ define "base" }}
-	<!-- TODO:
-	- change save button with animation
-	- copy to clipboard
--->
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -15,19 +11,16 @@
 		</head>
 		<body>
 			<header>
-				<a class="header__brand" href="/">Simple Paste</a>
-				<div class="header__address">
+				<h1>Simple Paste</h1>
+				<div class="left-group">
 					{{ template "address" . }}
 				</div>
-				<div class="header__icons">
-					<img class="header__share" src="./static/svg/share.svg" />
-					<img class="header__theme" src="./static/svg/sun.svg" />
-				</div>
+				<img class="icons share" src="./static/svg/share.svg" />
+				<img class="icons theme" src="./static/svg/sun.svg" />
 			</header>
 			<main>
 				{{ template "main" . }}
 			</main>
-			<footer></footer>
 		</body>
 	</html>
 {{ end }}

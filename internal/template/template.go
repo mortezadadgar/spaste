@@ -1,15 +1,10 @@
 package template
 
 import (
-	"errors"
 	"fmt"
-	"html/template"
 	"io"
 	"path/filepath"
-)
-
-var (
-	ErrTemplateFileNotFound = errors.New("no template page file found")
+	"text/template"
 )
 
 type Template struct {
@@ -18,24 +13,10 @@ type Template struct {
 	templateMap map[string]*template.Template
 }
 
-type Data struct {
-	Address         string
-	TextHighlighted template.HTML
-	LineCount       int
-	Lang            string
-
-	Message     string
-	IncludeHome bool
-}
-
-func ToHTML(s string) template.HTML {
-	return template.HTML(s)
-}
-
 // New returns a new instance of Template
 //
 // caller must have files named in *.page.tmpl format.
-func New(dir string, hasLayout bool) (Template, error) {
+func New(dir string, hasLayout bool) (*Template, error) {
 	r := Template{
 		dir:         dir,
 		hasLayout:   hasLayout,
@@ -43,15 +24,15 @@ func New(dir string, hasLayout bool) (Template, error) {
 	}
 
 	if err := r.cacheTemplate(); err != nil {
-		return Template{}, err
+		return nil, err
 	}
 
-	return r, nil
+	return &r, nil
 }
 
 // Render executes template by its name.
-func (r *Template) Render(w io.Writer, name string, data any) error {
-	err := r.templateMap[name].ExecuteTemplate(w, name, data)
+func (t *Template) Render(w io.Writer, name string, data any) error {
+	err := t.templateMap[name].ExecuteTemplate(w, name, data) // how
 	if err != nil {
 		return fmt.Errorf("failed to execute template name %s: %v", name, err)
 	}
@@ -59,13 +40,13 @@ func (r *Template) Render(w io.Writer, name string, data any) error {
 	return nil
 }
 
-func (r *Template) cacheTemplate() error {
-	pages, err := filepath.Glob(filepath.Join(r.dir, "*.page.tmpl"))
+func (t *Template) cacheTemplate() error {
+	pages, err := filepath.Glob(filepath.Join(t.dir, "*.page.tmpl"))
 	switch {
 	case len(pages) < 1:
-		return ErrTemplateFileNotFound
+		return fmt.Errorf("no template page file found") // test
 	case err != nil:
-		return fmt.Errorf("failed to find template pages: %v", err)
+		return fmt.Errorf("failed to find template pages: %v", err) // test
 	}
 
 	funcMap := template.FuncMap{
@@ -79,16 +60,16 @@ func (r *Template) cacheTemplate() error {
 		},
 	}
 
-	cache := r.templateMap
+	cache := t.templateMap
 	for _, page := range pages {
 		name := filepath.Base(page)
-		tmpl, err := template.New(name).Funcs(funcMap).ParseFiles(page)
+		tmpl, err := template.New(name).Funcs(funcMap).ParseFiles(page) // how
 		if err != nil {
 			return fmt.Errorf("failed to parse template page %s: %v", page, err)
 		}
 
-		if r.hasLayout {
-			tmpl, err = tmpl.ParseGlob(filepath.Join(r.dir, "*.layout.tmpl"))
+		if t.hasLayout {
+			tmpl, err = tmpl.ParseGlob(filepath.Join(t.dir, "*.layout.tmpl")) // how
 			if err != nil {
 				return fmt.Errorf("failed to parse layout templates: %v", err)
 			}

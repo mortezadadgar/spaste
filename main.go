@@ -4,8 +4,8 @@ import (
 	"log"
 
 	"github.com/mortezadadgar/spaste/internal/config"
-	"github.com/mortezadadgar/spaste/internal/http"
-	"github.com/mortezadadgar/spaste/internal/snippet"
+	"github.com/mortezadadgar/spaste/internal/paste"
+	"github.com/mortezadadgar/spaste/internal/server"
 	"github.com/mortezadadgar/spaste/internal/store"
 	"github.com/mortezadadgar/spaste/internal/template"
 	"github.com/mortezadadgar/spaste/internal/validator"
@@ -29,9 +29,9 @@ func main() {
 
 	validator := validator.New()
 
-	snippet := snippet.New(db, validator)
+	paste := paste.New(db, config)
 
-	server := http.New(config, template, snippet)
+	server := server.New(config, template, paste, validator)
 
-	server.Start()
+	log.Fatal(server.ListenAndServe())
 }
