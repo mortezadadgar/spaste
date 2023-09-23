@@ -17,17 +17,17 @@ type SQLiteStore struct {
 	DB *sql.DB
 }
 
-// NewSQLiteStore returns a instance of SQLiteStore.
-func NewSQLiteStore(c config.Config) (*SQLiteStore, error) {
+// New returns a instance of SQLiteStore.
+func New(c config.Config) (*SQLiteStore, error) {
 	store := &SQLiteStore{}
-	if err := store.init(c); err != nil {
+	if err := store.connect(c); err != nil {
 		return nil, err
 	}
 
 	return store, nil
 }
 
-func (s *SQLiteStore) init(config config.Config) error {
+func (s *SQLiteStore) connect(config config.Config) error {
 	DB, err := sql.Open("sqlite3", config.ConnectionString)
 	if err != nil {
 		return fmt.Errorf("falied to open sqlite database %v", err)

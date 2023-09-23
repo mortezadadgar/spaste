@@ -22,7 +22,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db, err := store.NewSQLiteStore(config)
+	db, err := store.New(config)
 	if err != nil {
 		log.Fatal(err)
 	}
