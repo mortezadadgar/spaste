@@ -146,13 +146,18 @@ main {
 	display: flex;
 }
 
+.textarea,
+.text,
+.numbers {
+	padding: 4px;
+	line-height: 20px;
+}
+
 main .textarea {
 	width: 100%;
 	background-color: var(--color-background);
 	caret-color: var(--color-foreground);
 	color: var(--color-foreground);
-	padding: 4px;
-	line-height: 20px;
 	resize: none;
 	white-space: pre;
 }
@@ -165,7 +170,6 @@ main .numbers {
 	color: var(--color-foreground);
 	padding: 4px 15px;
 	overflow: hidden;
-	line-height: 20px;
 }
 
 main .number {
