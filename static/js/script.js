@@ -59,13 +59,15 @@ function setupPage() {
 function setupEditPage() {
 	const textArea = document.querySelector(".textarea");
 	const langSelect = document.querySelector(".select");
-	let lineCount = 0;
 
 	document.querySelector(".save").addEventListener("click", async () => {
 		if (textArea.value.length == 0) {
 			alert("Please paste your code.");
 			return;
 		}
+
+		const trimmedText = textArea.value.trim()
+		const lineCount = trimmedText.split("\n").length
 
 		const response = await fetch("/paste", {
 			method: "POST",
@@ -95,13 +97,12 @@ function setupEditPage() {
 
 	textArea.addEventListener("input", () => {
 		lineNumbers.innerHTML = "";
-		var textLines = textArea.value.split("\n");
+		const textLines = textArea.value.split("\n");
 		for (let i = 0; i < textLines.length; i++) {
 			const numberElement = lineNumber.cloneNode(true);
 			numberElement.innerText = i + 1;
 			lineNumbers.appendChild(numberElement);
 		}
-		lineCount = textLines.length;
 	});
 
 	textArea.addEventListener("scroll", () => {
