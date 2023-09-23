@@ -93,7 +93,7 @@ header h1 {
 	font-style: italic;
 }
 
-header .left-group {
+header .metadata {
 	display: flex;
 	flex-direction: row;
 	margin-right: auto;
