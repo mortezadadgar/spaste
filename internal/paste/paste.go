@@ -3,9 +3,11 @@ package paste
 // TODO: find a better name for this package.
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"fmt"
 	"math/big"
+	"net/http"
 	"time"
 
 	"github.com/alecthomas/chroma/v2"
@@ -17,8 +19,8 @@ import (
 )
 
 type store interface {
-	Create(paste *modules.Paste) error
-	Get(addr string) (*modules.Paste, error)
+	Create(ctx context.Context, paste *modules.Paste) error
+	Get(ctx context.Context, addr string) (*modules.Paste, error)
 }
 
 type Paste struct {
@@ -35,7 +37,7 @@ func New(store store, config config.Config) *Paste {
 }
 
 // Create creates a new paste in store.
-func (u Paste) Create(text string, lang string, lineCount int) (string, error) {
+func (u Paste) Create(r *http.Request, text string, lang string, lineCount int) (string, error) {
 	randomAddress, err := makeAddress(u.config.AddressLength, lang)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate paste address: %v", err)
@@ -49,12 +51,12 @@ func (u Paste) Create(text string, lang string, lineCount int) (string, error) {
 		TimeStamp: time.Now().Format(time.DateTime),
 	}
 
-	return m.Address, u.store.Create(&m)
+	return m.Address, u.store.Create(r.Context(), &m)
 }
 
 // Get gets paste by its address.
-func (u Paste) Get(addr string) (*modules.Paste, error) {
-	return u.store.Get(addr)
+func (u Paste) Get(r *http.Request, addr string) (*modules.Paste, error) {
+	return u.store.Get(r.Context(), addr)
 }
 
 // Render render text in selected syntax highlighted language.

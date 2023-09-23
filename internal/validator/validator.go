@@ -60,6 +60,7 @@ func (v *Validator) IsBlank(name string, value string) {
 func (v *Validator) Valid() error {
 	v.mu.Lock()
 	defer v.mu.Unlock()
+
 	if len(v.errors) == 0 {
 		return nil
 	}
@@ -77,7 +78,6 @@ func (v *Validator) addError(t errType, name string) {
 	v.mu.Lock()
 	v.errors = append(v.errors, error)
 	v.mu.Unlock()
-
 }
 
 func (v *Validator) clearErrors() {

@@ -24,11 +24,11 @@ type mockPaste struct {
 	GetFunc    func() (*modules.Paste, error)
 }
 
-func (s *mockPaste) Get(string) (*modules.Paste, error) {
+func (s *mockPaste) Get(*http.Request, string) (*modules.Paste, error) {
 	return s.GetFunc()
 }
 
-func (s *mockPaste) Create(string, string, int) (string, error) {
+func (s *mockPaste) Create(*http.Request, string, string, int) (string, error) {
 	return s.CreateFunc()
 }
 
@@ -278,7 +278,6 @@ func marshalPaste(t *testing.T, module modules.Paste) []byte {
 	}
 
 	return b
-
 }
 
 func unmarshalPaste(t *testing.T, body io.Reader, module *modules.Paste) {

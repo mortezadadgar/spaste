@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-
 	"net/http"
 	"os"
 	"os/signal"
@@ -30,8 +29,8 @@ type Server struct {
 }
 
 type paste interface {
-	Get(addr string) (*modules.Paste, error)
-	Create(text string, lang string, lineCount int) (string, error)
+	Get(r *http.Request, addr string) (*modules.Paste, error)
+	Create(r *http.Request, text string, lang string, lineCount int) (string, error)
 	Render(m *modules.Paste) (string, error)
 }
 
@@ -145,7 +144,7 @@ func (s *Server) createPaste(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	address, err := s.paste.Create(pasteData.Text, pasteData.Lang, pasteData.LineCount)
+	address, err := s.paste.Create(r, pasteData.Text, pasteData.Lang, pasteData.LineCount)
 	if err != nil {
 		fmt.Println("create error")
 		s.serverError(w, r, err, http.StatusInternalServerError)
@@ -178,7 +177,7 @@ func (s *Server) renderPaste(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	paste, err := s.paste.Get(address)
+	paste, err := s.paste.Get(r, address)
 	switch {
 	case paste == nil:
 		s.notFoundHandler(w, r)

@@ -47,10 +47,7 @@ func (s *SQLiteStore) init(config config.Config) error {
 }
 
 // Create inserts paste to sqlite store.
-func (s *SQLiteStore) Create(m *modules.Paste) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
+func (s *SQLiteStore) Create(ctx context.Context, m *modules.Paste) error {
 	tx, err := s.DB.Begin()
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %v", err)
@@ -87,10 +84,7 @@ func (s *SQLiteStore) Create(m *modules.Paste) error {
 }
 
 // Get gets paste by its address from sqlite store.
-func (s *SQLiteStore) Get(address string) (*modules.Paste, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
+func (s *SQLiteStore) Get(ctx context.Context, address string) (*modules.Paste, error) {
 	tx, err := s.DB.Begin()
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %v", err)
