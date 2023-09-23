@@ -47,33 +47,59 @@ func (s *SQLiteStore) init(config config.Config) error {
 }
 
 // Create inserts paste to sqlite store.
-func (s *SQLiteStore) Create(p *modules.Paste) error {
+func (s *SQLiteStore) Create(m *modules.Paste) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := s.DB.ExecContext(ctx,
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	result, err := tx.ExecContext(ctx,
 		"INSERT INTO pastes(text, lang, line_count, addr, created_at) values(?, ?, ?, ?, ?)",
-		p.Text,
-		p.Lang,
-		p.LineCount,
-		p.Address,
-		p.TimeStamp,
+		m.Text,
+		m.Lang,
+		m.LineCount,
+		m.Address,
+		m.TimeStamp,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to insert to sqlite table: %v", err)
+	}
+
+	r, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %v", err)
+	}
+
+	if r != 1 {
+		return fmt.Errorf("expected to only one row affected")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction")
 	}
 
 	return nil
 }
 
 // Get gets paste by its address from sqlite store.
-func (s *SQLiteStore) Get(addr string) (*modules.Paste, error) {
+func (s *SQLiteStore) Get(address string) (*modules.Paste, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	defer tx.Rollback()
+
 	var p modules.Paste
-	err := s.DB.QueryRowContext(ctx,
-		"SELECT * FROM pastes WHERE addr = ?", addr).Scan(
+	err = tx.QueryRowContext(ctx,
+		"SELECT * FROM pastes WHERE addr = ?", address).Scan(
 		&p.ID,
 		&p.Text,
 		&p.Lang,

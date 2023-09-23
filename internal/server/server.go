@@ -57,7 +57,7 @@ func New(config config.Config, template template, paste paste, validator validat
 
 	r := chi.NewMux()
 
-	r.Use(s.logger)
+	// r.Use(s.logger)
 	r.Use(s.recoverer)
 
 	fs := http.FileServer(http.Dir("./static"))
@@ -132,7 +132,7 @@ func (s *Server) createPaste(w http.ResponseWriter, r *http.Request) {
 	var pasteData modules.Paste
 	err := json.NewDecoder(r.Body).Decode(&pasteData)
 	if err != nil {
-		s.serverError(w, r, err, http.StatusInternalServerError)
+		s.serverError(w, r, fmt.Errorf("failed to decode body: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -147,6 +147,7 @@ func (s *Server) createPaste(w http.ResponseWriter, r *http.Request) {
 
 	address, err := s.paste.Create(pasteData.Text, pasteData.Lang, pasteData.LineCount)
 	if err != nil {
+		fmt.Println("create error")
 		s.serverError(w, r, err, http.StatusInternalServerError)
 		return
 	}
@@ -164,7 +165,7 @@ func (s *Server) createPaste(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(addressData)
 	if err != nil {
-		s.serverError(w, r, err, http.StatusInternalServerError)
+		s.serverError(w, r, fmt.Errorf("failed to encode body: %v", err), http.StatusInternalServerError)
 		return
 	}
 }

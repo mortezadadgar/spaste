@@ -89,17 +89,17 @@ func (u Paste) Render(m *modules.Paste) (string, error) {
 
 func makeAddress(length int64, lang string) (string, error) {
 	if length == 0 {
-		return "", fmt.Errorf("generating empty address is not allowed") // test
+		return "", fmt.Errorf("generating empty address is not allowed")
 	}
 
-	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	buffer := make([]byte, length)
 	for i := range buffer {
 		r, err := rand.Int(rand.Reader, big.NewInt(length))
 		if err != nil {
 			return "", fmt.Errorf("failed to generate random addresses: %v", err)
 		}
-		buffer[i] = letters[r.Int64()]
+		buffer[i] = charset[r.Int64()]
 	}
 
 	return fmt.Sprintf("%s.%s", buffer, lang), nil
