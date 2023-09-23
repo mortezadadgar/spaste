@@ -1,5 +1,5 @@
 {{ define "base" }}
-	<!DOCTYPE html>
+	<!doctype html>
 	<html lang="en">
 		<head>
 			<title>{{ template "title" . }}</title>
@@ -15,6 +15,7 @@
 				<div class="left-group">
 					{{ template "address" . }}
 				</div>
+				<div class="hidden dialog">Address copied to clipboard!</div>
 				<img class="icons share" src="./static/svg/share.svg" />
 				<img class="icons theme" src="./static/svg/sun.svg" />
 			</header>

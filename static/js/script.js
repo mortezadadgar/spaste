@@ -45,12 +45,20 @@ function setupColors() {
 
 function setupPage() {
 	const pasteAddress = document.querySelector(".address");
+	const pasteDialog = document.querySelector(".dialog");
+	const dialogTimeout = 2000;
 
 	document.querySelector(".share").addEventListener("click", () => {
 		if (pasteAddress.value.length == 0) {
 			alert("Please save your code first.");
 			return;
 		}
+
+		pasteDialog.classList.remove("hidden")
+
+		setTimeout(() => {
+			pasteDialog.classList.add("hidden")
+		}, dialogTimeout);
 
 		navigator.clipboard.writeText(pasteAddress.value);
 	});

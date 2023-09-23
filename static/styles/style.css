@@ -73,7 +73,7 @@ textarea {
 }
 
 .hidden {
-	display: none;
+	display: none !important;
 }
 
 header {
@@ -140,6 +140,17 @@ header .icons {
 	filter: invert(var(--icons-filter-invert));
 	cursor: pointer;
 	margin: 0 8px;
+}
+
+header .dialog {
+	background-color: #c0c0c0;
+	position: absolute;
+	top: 100%;
+	right: 5%;
+	padding: 10px;
+	color: #000000;
+	display: block;
+	border-radius: 5px;
 }
 
 main {
