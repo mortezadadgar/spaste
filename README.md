@@ -13,3 +13,8 @@ $ docker run -p 8080:8080 -t spaste
 - [X] Show a dialog upon copying to clipboard
 - [X] Unit testing
 - [ ] Allow custom paste address
+- [ ] Use goose for sql migration
+- [ ] Rewrite Dockerfile
+- [ ] Integration tests
+- [ ] Select or drop and drag text file
+- [ ] Expire pastes after a week
