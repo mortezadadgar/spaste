@@ -85,7 +85,7 @@ function setupEditPage() {
 			},
 			body: JSON.stringify({
 				address: pasteAddress.value.trim(),
-				text: textArea.value,
+				text: trimmedText,
 				lang: langSelect.value,
 				lineCount: lineCount,
 			}),
