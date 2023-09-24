@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
@@ -15,12 +16,31 @@ import (
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/mortezadadgar/spaste/internal/config"
-	"github.com/mortezadadgar/spaste/internal/modules"
 )
 
+var ErrNoPasteFound = errors.New("no paste found")
+
+type Module struct {
+	ID        int    `json:"-"`
+	Text      string `json:"text,omitempty"`
+	Lang      string `json:"lang,omitempty"`
+	LineCount int    `json:"linecount,omitempty"`
+	Address   string `json:"address,omitempty"`
+	TimeStamp string `json:"-"`
+}
+
+type TemplateData struct {
+	Address         string
+	TextHighlighted string
+	LineCount       int
+	Lang            string
+	Message         string
+	IncludeHome     bool
+}
+
 type store interface {
-	Create(ctx context.Context, paste *modules.Paste) error
-	Get(ctx context.Context, addr string) (*modules.Paste, error)
+	Create(ctx context.Context, paste Module) error
+	Get(ctx context.Context, addr string) (Module, error)
 }
 
 type Paste struct {
@@ -29,15 +49,15 @@ type Paste struct {
 }
 
 // New returns a instance of Paste.
-func New(store store, config config.Config) *Paste {
-	return &Paste{
+func New(store store, config config.Config) Paste {
+	return Paste{
 		store:  store,
 		config: config,
 	}
 }
 
 // Create creates a new paste in store.
-func (u Paste) Create(r *http.Request, m modules.Paste) (string, error) {
+func (u Paste) Create(r *http.Request, m Module) (string, error) {
 	address := m.Address
 	var err error
 
@@ -48,7 +68,7 @@ func (u Paste) Create(r *http.Request, m modules.Paste) (string, error) {
 		}
 	}
 
-	m = modules.Paste{
+	m = Module{
 		Text:      m.Text,
 		Lang:      m.Lang,
 		LineCount: m.LineCount,
@@ -56,16 +76,16 @@ func (u Paste) Create(r *http.Request, m modules.Paste) (string, error) {
 		TimeStamp: time.Now().Format(time.DateTime),
 	}
 
-	return address, u.store.Create(r.Context(), &m)
+	return address, u.store.Create(r.Context(), m)
 }
 
 // Get gets paste by its address.
-func (u Paste) Get(r *http.Request, addr string) (*modules.Paste, error) {
+func (u Paste) Get(r *http.Request, addr string) (Module, error) {
 	return u.store.Get(r.Context(), addr)
 }
 
 // Render render text in selected syntax highlighted language.
-func (u Paste) Render(m *modules.Paste) (string, error) {
+func (u Paste) Render(m Module) (string, error) {
 	lexer := lexers.Get(m.Lang)
 	if lexer == nil {
 		lexer = lexers.Fallback

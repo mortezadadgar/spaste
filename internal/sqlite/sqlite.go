@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/mortezadadgar/spaste/internal/config"
-	"github.com/mortezadadgar/spaste/internal/modules"
+	"github.com/mortezadadgar/spaste/internal/paste"
 
 	// sqlite3 driver.
 	_ "github.com/mattn/go-sqlite3"
@@ -25,6 +25,10 @@ func New(c config.Config) (*SQLite, error) {
 	}
 
 	return store, nil
+}
+
+func (s *SQLite) Close() error {
+	return s.DB.Close()
 }
 
 func (s *SQLite) connect(config config.Config) error {
@@ -47,14 +51,14 @@ func (s *SQLite) connect(config config.Config) error {
 }
 
 // Create inserts paste to sqlite store.
-func (s *SQLite) Create(ctx context.Context, m *modules.Paste) error {
+func (s *SQLite) Create(ctx context.Context, m paste.Module) error {
 	result, err := s.DB.ExecContext(ctx,
 		"INSERT INTO pastes(text, lang, line_count, addr, created_at) values(?, ?, ?, ?, ?)",
-		m.Text,
-		m.Lang,
-		m.LineCount,
-		m.Address,
-		m.TimeStamp,
+		&m.Text,
+		&m.Lang,
+		&m.LineCount,
+		&m.Address,
+		&m.TimeStamp,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to insert to sqlite table: %v", err)
@@ -73,8 +77,8 @@ func (s *SQLite) Create(ctx context.Context, m *modules.Paste) error {
 }
 
 // Get gets paste by its address from sqlite store.
-func (s *SQLite) Get(ctx context.Context, address string) (*modules.Paste, error) {
-	var p modules.Paste
+func (s *SQLite) Get(ctx context.Context, address string) (paste.Module, error) {
+	var p paste.Module
 	err := s.DB.QueryRowContext(ctx,
 		"SELECT * FROM pastes WHERE addr = ?", address).Scan(
 		&p.ID,
@@ -84,12 +88,11 @@ func (s *SQLite) Get(ctx context.Context, address string) (*modules.Paste, error
 		&p.Address,
 		&p.TimeStamp,
 	)
-	switch {
-	case err == sql.ErrNoRows:
-		return nil, nil
-	case err != nil:
-		return nil, fmt.Errorf("failed to select from sqlite table: %v", err)
+	if err == sql.ErrNoRows {
+		return paste.Module{}, paste.ErrNoPasteFound
+	} else if err != nil {
+		return paste.Module{}, fmt.Errorf("failed to select from sqlite table: %v", err)
 	}
 
-	return &p, nil
+	return p, nil
 }

@@ -16,18 +16,18 @@ type Template struct {
 // New returns a new instance of Template
 //
 // caller must have files named in *.page.tmpl format.
-func New(dir string, hasLayout bool) (*Template, error) {
-	r := Template{
+func New(dir string, hasLayout bool) (Template, error) {
+	t := Template{
 		dir:         dir,
 		hasLayout:   hasLayout,
 		templateMap: make(map[string]*template.Template),
 	}
 
-	if err := r.cacheTemplate(); err != nil {
-		return nil, err
+	if err := t.cacheTemplate(); err != nil {
+		return Template{}, err
 	}
 
-	return &r, nil
+	return t, nil
 }
 
 // Render executes template by its name.
