@@ -6,7 +6,7 @@ import (
 	"github.com/mortezadadgar/spaste/internal/config"
 	"github.com/mortezadadgar/spaste/internal/paste"
 	"github.com/mortezadadgar/spaste/internal/server"
-	"github.com/mortezadadgar/spaste/internal/store"
+	"github.com/mortezadadgar/spaste/internal/sqlite"
 	"github.com/mortezadadgar/spaste/internal/template"
 	"github.com/mortezadadgar/spaste/internal/validator"
 )
@@ -22,7 +22,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db, err := store.New(config)
+	db, err := sqlite.New(config)
 	if err != nil {
 		log.Fatal(err)
 	}

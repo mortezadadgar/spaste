@@ -1,4 +1,4 @@
-package store
+package sqlite
 
 import (
 	"context"
@@ -13,13 +13,13 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type SQLiteStore struct {
+type SQLite struct {
 	DB *sql.DB
 }
 
 // New returns a instance of SQLiteStore.
-func New(c config.Config) (*SQLiteStore, error) {
-	store := &SQLiteStore{}
+func New(c config.Config) (*SQLite, error) {
+	store := &SQLite{}
 	if err := store.connect(c); err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func New(c config.Config) (*SQLiteStore, error) {
 	return store, nil
 }
 
-func (s *SQLiteStore) connect(config config.Config) error {
+func (s *SQLite) connect(config config.Config) error {
 	DB, err := sql.Open("sqlite3", config.ConnectionString)
 	if err != nil {
 		return fmt.Errorf("falied to open sqlite database %v", err)
@@ -47,7 +47,7 @@ func (s *SQLiteStore) connect(config config.Config) error {
 }
 
 // Create inserts paste to sqlite store.
-func (s *SQLiteStore) Create(ctx context.Context, m *modules.Paste) error {
+func (s *SQLite) Create(ctx context.Context, m *modules.Paste) error {
 	result, err := s.DB.ExecContext(ctx,
 		"INSERT INTO pastes(text, lang, line_count, addr, created_at) values(?, ?, ?, ?, ?)",
 		m.Text,
@@ -73,7 +73,7 @@ func (s *SQLiteStore) Create(ctx context.Context, m *modules.Paste) error {
 }
 
 // Get gets paste by its address from sqlite store.
-func (s *SQLiteStore) Get(ctx context.Context, address string) (*modules.Paste, error) {
+func (s *SQLite) Get(ctx context.Context, address string) (*modules.Paste, error) {
 	var p modules.Paste
 	err := s.DB.QueryRowContext(ctx,
 		"SELECT * FROM pastes WHERE addr = ?", address).Scan(
