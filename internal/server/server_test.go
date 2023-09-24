@@ -28,7 +28,7 @@ func (s *mockPaste) Get(*http.Request, string) (*modules.Paste, error) {
 	return s.GetFunc()
 }
 
-func (s *mockPaste) Create(*http.Request, string, string, int) (string, error) {
+func (s *mockPaste) Create(*http.Request, modules.Paste) (string, error) {
 	return s.CreateFunc()
 }
 

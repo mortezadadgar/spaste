@@ -37,21 +37,26 @@ func New(store store, config config.Config) *Paste {
 }
 
 // Create creates a new paste in store.
-func (u Paste) Create(r *http.Request, text string, lang string, lineCount int) (string, error) {
-	randomAddress, err := makeAddress(u.config.AddressLength, lang)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate paste address: %v", err)
+func (u Paste) Create(r *http.Request, m modules.Paste) (string, error) {
+	address := m.Address
+	var err error
+
+	if len(m.Address) == 0 {
+		address, err = makeAddress(u.config.AddressLength, m.Lang)
+		if err != nil {
+			return "", fmt.Errorf("failed to generate paste address: %v", err)
+		}
 	}
 
-	m := modules.Paste{
-		Text:      text,
-		Lang:      lang,
-		LineCount: lineCount,
-		Address:   randomAddress,
+	m = modules.Paste{
+		Text:      m.Text,
+		Lang:      m.Lang,
+		LineCount: m.LineCount,
+		Address:   address,
 		TimeStamp: time.Now().Format(time.DateTime),
 	}
 
-	return m.Address, u.store.Create(r.Context(), &m)
+	return address, u.store.Create(r.Context(), &m)
 }
 
 // Get gets paste by its address.

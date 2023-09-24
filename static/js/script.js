@@ -67,6 +67,7 @@ function setupPage() {
 function setupEditPage() {
 	const textArea = document.querySelector(".textarea");
 	const langSelect = document.querySelector(".select");
+	const pasteAddress = document.querySelector(".address");
 
 	document.querySelector(".save").addEventListener("click", async () => {
 		if (textArea.value.length == 0) {
@@ -83,6 +84,7 @@ function setupEditPage() {
 				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({
+				address: pasteAddress.value.trim(),
 				text: textArea.value,
 				lang: langSelect.value,
 				lineCount: lineCount,

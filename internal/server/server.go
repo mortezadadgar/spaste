@@ -30,7 +30,7 @@ type Server struct {
 
 type paste interface {
 	Get(r *http.Request, addr string) (*modules.Paste, error)
-	Create(r *http.Request, text string, lang string, lineCount int) (string, error)
+	Create(r *http.Request, m modules.Paste) (string, error)
 	Render(m *modules.Paste) (string, error)
 }
 
@@ -65,7 +65,7 @@ func New(config config.Config, template template, paste paste, validator validat
 
 	r.Get("/", s.renderIndex)
 	r.Post("/paste", s.createPaste)
-	r.Get("/{addr:[Aa-zZ.]+}", s.renderPaste)
+	r.Get("/{addr:.+}", s.renderPaste)
 	r.NotFound(s.notFoundHandler)
 
 	s.Handler = r
@@ -144,9 +144,15 @@ func (s *Server) createPaste(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	address, err := s.paste.Create(r, pasteData.Text, pasteData.Lang, pasteData.LineCount)
+	m := modules.Paste {
+		Address: pasteData.Address,
+		Text: pasteData.Text,
+		Lang: pasteData.Lang,
+		LineCount: pasteData.LineCount,
+	}
+
+	address, err := s.paste.Create(r, m)
 	if err != nil {
-		fmt.Println("create error")
 		s.serverError(w, r, err, http.StatusInternalServerError)
 		return
 	}
