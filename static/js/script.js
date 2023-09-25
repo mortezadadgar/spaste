@@ -27,15 +27,9 @@ function setupColors() {
 	themeButton.addEventListener("click", () => {
 		if (storage.getItem("light-theme") == "true") {
 			themeButton.src = "./static/svg/sun.svg";
-		} else {
-			themeButton.src = "./static/svg/moon.svg";
-		}
-	});
-
-	themeButton.addEventListener("click", () => {
-		if (storage.getItem("light-theme") == "true") {
 			storage.setItem("light-theme", false);
 		} else {
+			themeButton.src = "./static/svg/moon.svg";
 			storage.setItem("light-theme", true);
 		}
 
